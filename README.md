@@ -1,0 +1,1 @@
+plays chess ig [reworking everything atm]
