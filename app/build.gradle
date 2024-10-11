@@ -34,7 +34,7 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = 'rhythm.App'
+    mainClass = 'base.App'
 }
 
 tasks.named('test') {
