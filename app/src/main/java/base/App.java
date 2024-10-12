@@ -1,11 +1,14 @@
 package base;
 
+import uci.RhythmUci;
+import uci.UciProtocol;
+
 public class App {
     public static void main(String[] args) {
-        System.out.println("Hello, World!");
+        System.out.println("Starting up...");
 
-        // edit made for import-engine branch
-        System.out.println("edit made for import-engine branch");
+        RhythmUci rhythmUci = new RhythmUci();
+        UciProtocol uci = new UciProtocol(rhythmUci);
     }
 }
 
