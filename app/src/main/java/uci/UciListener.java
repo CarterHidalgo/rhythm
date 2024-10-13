@@ -3,9 +3,7 @@ package uci;
 import java.util.LinkedList;
 
 public interface UciListener {
-    default void onConnection() {
-
-    }
+    default void onConnection() {}
 
     String getEngineName();
 
@@ -15,13 +13,9 @@ public interface UciListener {
         return new LinkedList<>();
     }
 
-    default void setOptionValue(String option) {
+    default void setOptionValue(String option) {}
 
-    }
-
-    default void getReady() {
-
-    }
+    default void getReady() {}
 
     void setPosition(String initialPosition, String[] moves);
 

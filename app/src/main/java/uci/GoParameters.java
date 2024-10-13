@@ -32,4 +32,43 @@ public class GoParameters {
         this.infinite = infinite;
     }
 
+    public Optional<Integer> getWhiteTime() {
+        return whiteTime;
+    }
+
+    public Optional<Integer> getWhiteTimeIncrement() {
+        return whiteTimeIncrement;
+    }
+
+    public Optional<Integer> getBlackTime() {
+        return blackTime;
+    }
+
+    public Optional<Integer> getBlackTimeIncrement() {
+        return blackTimeIncrement;
+    }
+
+    public Optional<Integer> getMovesToGo() {
+        return movesToGo;
+    }
+
+    public Optional<Integer> getDepth() {
+        return depth;
+    }
+
+    public Optional<Integer> getNodes() {
+        return nodes;
+    }
+
+    public Optional<Integer> getMate() {
+        return mate;
+    }
+
+    public Optional<Integer> getMoveTime() {
+        return moveTime;
+    }
+
+    public Boolean getInfinite() {
+        return infinite;
+    }
 }
