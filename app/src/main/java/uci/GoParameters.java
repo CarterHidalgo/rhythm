@@ -1,3 +1,10 @@
+/*
+ * Name: GoParameters.java
+ * Author: FrequentlyMissedDeadlines (https://github.com/FrequentlyMissedDeadlines/Chess-UCI) Thanks! =]
+ * 
+ * Purpose: Contains parameters and getters for the UCI 'go' command
+ */
+
 package uci;
 
 import java.util.Optional;
@@ -12,13 +19,14 @@ public class GoParameters {
     private final Optional<Integer> nodes;
     private final Optional<Integer> mate;
     private final Optional<Integer> moveTime;
+    private final Optional<Integer> perft;
     private final Boolean infinite;
 
     public GoParameters(
         Optional<Integer> whiteTime, Optional<Integer> whiteTimeIncrement,
         Optional<Integer> blackTime, Optional<Integer> blackTimeIncrement,
         Optional<Integer> movesToGo, Optional<Integer> depth, Optional<Integer> nodes,
-        Optional<Integer> mate, Optional<Integer> moveTime, Boolean infinite
+        Optional<Integer> mate, Optional<Integer> moveTime, Optional<Integer> perft, Boolean infinite
     ) {
         this.whiteTime = whiteTime;
         this.whiteTimeIncrement = whiteTimeIncrement;
@@ -29,6 +37,7 @@ public class GoParameters {
         this.nodes = nodes;
         this.mate = mate;
         this.moveTime = moveTime;
+        this.perft = perft;
         this.infinite = infinite;
     }
 
@@ -66,6 +75,10 @@ public class GoParameters {
 
     public Optional<Integer> getMoveTime() {
         return moveTime;
+    }
+
+    public Optional<Integer> getPerft() {
+        return perft;
     }
 
     public Boolean getInfinite() {
