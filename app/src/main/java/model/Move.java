@@ -2,12 +2,13 @@
  * Name: Move.java
  * Author: Pigpen
  * 
- * Purpose: Contains move type flag bitcodes and methods for creating or printing moves (shorts)
+ * Purpose: Contains move type flag bitcodes and methods for creating, making, or printing moves (shorts)
  */
 
 package model;
 
 import helper.Bit;
+import helper.Enum;
 
 public class Move {
     public static final byte QUIET = 0b0000;
@@ -29,8 +30,41 @@ public class Move {
         return (short) ((from & 0x3F) | ((to & 0x3F) << 6) | ((flags & 0xF) << 12));
     }
 
+    public static int getTo(short move) {
+        return ((move >> 6) & 0x3F);
+    }
+
+    public static int getFrom(short move) {
+        return ((move & 0x3F));
+    }
+
+    public static void make(short move) {
+        // push current state onto stack
+
+        // apply move
+        System.out.println("applying " + Move.getAlgebraic(move));
+        
+        int from = Move.getFrom(move);
+        int to = Move.getTo(move);
+        int piece = Board.get(from);
+        int color = Piece.color(piece);
+        long fromBitboard = 1 << from;
+        long toBitboard = 1 << to;
+        long fromToBitboard = fromBitboard ^ toBitboard;
+
+
+        // quiet move
+        Bitboard.toggle(piece, fromToBitboard);
+        Bitboard.toggle(color, fromToBitboard);
+        Bitboard.toggle(Enum.OCCUPIED, fromToBitboard);
+        Bitboard.toggle(Enum.EMPTY, fromToBitboard);
+    }
+
+    public static void unmake() {
+        // restore state from stack
+    }
+
     public static boolean isLegal(short move) {
-        // true if pseudo-legal is legal
         return true;
     }
 

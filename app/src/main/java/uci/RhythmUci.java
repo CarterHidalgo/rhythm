@@ -9,7 +9,6 @@ package uci;
 
 import helper.Printer;
 import model.Model;
-import model.Piece;
 
 public class RhythmUci implements UciListener {
     @Override
@@ -38,7 +37,7 @@ public class RhythmUci implements UciListener {
     @Override
     public void setPosition(String initPos, String[] moves) {
         Model.setPosition(initPos);
-        Model.makeMoves(moves);
+        // Model.makeMoves(moves);
     }
 
     @Override

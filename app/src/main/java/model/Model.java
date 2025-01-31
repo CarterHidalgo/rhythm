@@ -20,9 +20,8 @@ public class Model {
     public static void init() {
         FEN start = new FEN();
 
-        Bitboard.create();
         Bitboard.setWithFEN(start);
-        BoardLookup.setWithFEN(start);
+        Board.setWithFEN(start);
         MagicBitboard.init();
 
         setReady(true);
@@ -58,11 +57,7 @@ public class Model {
         FEN fenObj = new FEN(fenStr);
 
         Bitboard.setWithFEN(fenObj);
-        BoardLookup.setWithFEN(fenObj);
-    }
-
-    public static void makeMoves(String[] moves) {
-        // make every move in moves 
+        Board.setWithFEN(fenObj);
     }
 
     public static int perft(int depth) {
@@ -73,32 +68,18 @@ public class Model {
         ArrayList<Short> moves = MoveGeneration.gen();
 
         int nodes = 0;
-        if(depth <= 1) {
-            for(short move : moves) {
-                if(Move.isLegal(move)) {
-                    nodes++;
-
-                    // if(root) {
-                    //     UciProtocol.write(Move.getAlgebraic(move) + ": 1");
-                    // }
-                }
-            }
-
-            return nodes;
-        }
-
-        int branchNodes;
         for(short move : moves) {
             if(Move.isLegal(move)) {
-                // add something to make the move so structures are updated
+                Move.make(move);
+                
+                return -1;
 
-                branchNodes = perft(depth - 1, false);
-
+                // int branchNodes = depth <= 1 ? 1 : perft(depth - 1, false);
+                // nodes += branchNodes;
+                
                 // if(root) {
-                //     UciProtocol.write(Move.getAlgebraic(move) + ": " + branchNodes);
+                //     System.out.println(Move.getAlgebraic(move) + ": " + branchNodes);
                 // }
-
-                nodes += branchNodes;
             }
         }
 

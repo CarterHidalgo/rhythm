@@ -42,7 +42,7 @@ public class UciProtocol {
     private final Pattern patternNodes = Pattern.compile(".*nodes (\\d+).*");
     private final Pattern patternMate = Pattern.compile(".*mate (\\d+) .*");
     private final Pattern patternMovetime = Pattern.compile(".*movetime (\\d+).*");
-    private final Pattern patternPerft = Pattern.compile(".*perft ([1-9]|[1-9]\\\\d).*");
+    private final Pattern patternPerft = Pattern.compile("perft ([1-9]|[1-9]\\\\d).*");
     private final Pattern positionPattern = Pattern.compile("(?:fen (?<fen>.* \\d+ \\d+)|startpos)(?: moves (?<moves>.*))?");
 
     Thread uciThread;
@@ -125,21 +125,29 @@ public class UciProtocol {
                 infinite);
 
         if(goParameters.getPerft().isPresent()) {
+            if(goParameters.getPerft().get() < 1) {
+                return;
+            }
+
             long start = System.nanoTime();
             int nodes = listener.perft(goParameters.getPerft().get());
             long taken = System.nanoTime() - start;
 
-            out.println("\nnodes: " + nodes);
-            out.println("time: " + taken / 1_000_000 + "ms");
-            out.println("nps: " + (int) (nodes / (++taken / 1_000_000_000.0)) + "\n");
+            if(nodes > 0) {
+                out.println("\nnodes: " + nodes);
+                out.println("time: " + taken / 1_000_000 + "ms");
+                out.println("nps: " + (int) (nodes / (++taken / 1_000_000_000.0)) + "\n");
+            }
+
 
             return;
+        } else {
+            new Thread(() -> {
+                String bestMove = listener.go(goParameters);
+                out.println("bestmove " + bestMove);
+            }).start();
         }
         
-        new Thread(() -> {
-            String bestMove = listener.go(goParameters);
-            out.println("bestmove " + bestMove);
-        }).start();
     }
 
     private void position(String position) {

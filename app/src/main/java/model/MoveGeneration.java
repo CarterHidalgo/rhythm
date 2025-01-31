@@ -10,6 +10,7 @@ package model;
 import java.util.ArrayList;
 
 import helper.Bit;
+import helper.Enum;
 import helper.Offset;
 import model.magics.MagicBitboard;
 import model.moves.KingMoves;
@@ -30,14 +31,14 @@ public class MoveGeneration {
     }
 
     private static void addPawnMoves(ArrayList<Short> moves) {
-        long self = Bitboard.getSelf(Piece.PAWN);
+        long self = Bitboard.getSelf(Enum.PAWN);
         int index;
 
         while (self != 0) {
             index = Long.numberOfTrailingZeros(self);
 
-            if (Bit.isSet(Bitboard.get(Piece.EMPTY), Offset.forward(index))) {
-                if (Bit.isSet(Bitboard.getSelf(Piece.PROMO), Offset.forward(index))) {
+            if (Bit.isSet(Bitboard.get(Enum.EMPTY), Offset.forward(index))) {
+                if (Bit.isSet(Bitboard.getSelf(Enum.PROMO), Offset.forward(index))) {
                     moves.add(Move.create(index, Offset.forward(index), Move.QUEEN_PROMO));
                     moves.add(Move.create(index, Offset.forward(index), Move.ROOK_PROMO));
                     moves.add(Move.create(index, Offset.forward(index), Move.BISHOP_PROMO));
@@ -46,14 +47,14 @@ public class MoveGeneration {
                     moves.add(Move.create(index, Offset.forward(index), Move.QUIET));
                 }
 
-                if (Bit.isSet(Bitboard.get(Piece.EMPTY), Offset.dbForward(index))
-                        && Bit.isSet(Bitboard.getSelf(Piece.HOME), index)) {
+                if (Bit.isSet(Bitboard.get(Enum.EMPTY), Offset.dbForward(index))
+                        && Bit.isSet(Bitboard.getSelf(Enum.HOME), index)) {
                     moves.add(Move.create(index, Offset.dbForward(index), Move.DOUBLE_PAWN));
                 }
             }
 
             if (Offset.lForward(index) != -1 && Bit.isSet(Bitboard.getOp(), Offset.lForward(index))) {
-                if (Bit.isSet(Bitboard.getSelf(Piece.PROMO), Offset.lForward(index))) {
+                if (Bit.isSet(Bitboard.getSelf(Enum.PROMO), Offset.lForward(index))) {
                     moves.add(Move.create(index, Offset.lForward(index), Move.QUEEN_PROMO_CAPTURE));
                     moves.add(Move.create(index, Offset.lForward(index), Move.ROOK_PROMO_CAPTURE));
                     moves.add(Move.create(index, Offset.lForward(index), Move.BISHOP_PROMO_CAPTURE));
@@ -64,7 +65,7 @@ public class MoveGeneration {
             }
 
             if (Offset.rForward(index) != -1 && Bit.isSet(Bitboard.getOp(), Offset.rForward(index))) {
-                if (Bit.isSet(Bitboard.getSelf(Piece.PROMO), Offset.rForward(index))) {
+                if (Bit.isSet(Bitboard.getSelf(Enum.PROMO), Offset.rForward(index))) {
                     moves.add(Move.create(index, Offset.rForward(index), Move.QUEEN_PROMO_CAPTURE));
                     moves.add(Move.create(index, Offset.rForward(index), Move.ROOK_PROMO_CAPTURE));
                     moves.add(Move.create(index, Offset.rForward(index), Move.BISHOP_PROMO_CAPTURE));
@@ -80,7 +81,7 @@ public class MoveGeneration {
 
     private static void addKnightMoves(ArrayList<Short> moves) {
         long to;
-        long self = Bitboard.getSelf(Piece.KNIGHT);
+        long self = Bitboard.getSelf(Enum.KNIGHT);
         int fromIndex, toIndex;
 
         while (self != 0) {
@@ -105,7 +106,7 @@ public class MoveGeneration {
 
     private static void addBishopMoves(ArrayList<Short> moves) {
         long to;
-        long self = Bitboard.getSelf(Piece.BISHOP);
+        long self = Bitboard.getSelf(Enum.BISHOP);
         int fromIndex, toIndex;
 
         while (self != 0) {
@@ -130,7 +131,7 @@ public class MoveGeneration {
 
     private static void addRookMoves(ArrayList<Short> moves) {
         long to;
-        long self = Bitboard.getSelf(Piece.ROOK);
+        long self = Bitboard.getSelf(Enum.ROOK);
         int fromIndex, toIndex;
 
         while (self != 0) {
@@ -155,7 +156,7 @@ public class MoveGeneration {
 
     private static void addQueenMoves(ArrayList<Short> moves) {
         long to;
-        long self = Bitboard.getSelf(Piece.QUEEN);
+        long self = Bitboard.getSelf(Enum.QUEEN);
         int fromIndex, toIndex;
 
         while (self != 0) {
@@ -180,7 +181,7 @@ public class MoveGeneration {
 
     private static void addKingMoves(ArrayList<Short> moves) {
         long to;
-        long self = Bitboard.getSelf(Piece.KING);
+        long self = Bitboard.getSelf(Enum.KING);
         int fromIndex, toIndex;
 
         while (self != 0) {
@@ -202,17 +203,17 @@ public class MoveGeneration {
             self = Bit.clear(self, fromIndex);
 
             if (GameInfo.getCastleRights(GameInfo.getTurn(), 0) &&
-                    Bit.isSet(Bitboard.getSelf(Piece.ROOK), fromIndex + 3) &&
-                    !Bit.isSet(Bitboard.get(Piece.OCCUPIED), fromIndex + 1) &&
-                    !Bit.isSet(Bitboard.get(Piece.OCCUPIED), fromIndex + 2)) {
+                    Bit.isSet(Bitboard.getSelf(Enum.ROOK), fromIndex + 3) &&
+                    !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex + 1) &&
+                    !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex + 2)) {
                 moves.add(Move.create(fromIndex, fromIndex + 2, Move.KING_CASTLE));
             }
 
             if (GameInfo.getCastleRights(GameInfo.getTurn(), 1) &&
-                    Bit.isSet(Bitboard.getSelf(Piece.ROOK), fromIndex + 3) &&
-                    !Bit.isSet(Bitboard.get(Piece.OCCUPIED), fromIndex - 1) &&
-                    !Bit.isSet(Bitboard.get(Piece.OCCUPIED), fromIndex - 2) &&
-                    !Bit.isSet(Bitboard.get(Piece.OCCUPIED), fromIndex - 3)) {
+                    Bit.isSet(Bitboard.getSelf(Enum.ROOK), fromIndex + 3) &&
+                    !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex - 1) &&
+                    !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex - 2) &&
+                    !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex - 3)) {
                 moves.add(Move.create(fromIndex, fromIndex - 2, Move.QUEEN_CASTLE));
             }
         }

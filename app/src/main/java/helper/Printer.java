@@ -8,7 +8,7 @@
 package helper;
 
 import model.Bitboard;
-import model.BoardLookup;
+import model.Board;
 import model.Piece;
 
 public class Printer {
@@ -19,6 +19,7 @@ public class Printer {
 
     public static void board() {
         int index = 0;
+        int code = 0;
 
         System.out.println("\n   a b c d e f g h\n");
 
@@ -30,10 +31,37 @@ public class Printer {
 
                 System.out.print(" ");
 
-                if(Piece.isWhite(BoardLookup.getCode(index))) {
-                    blue(BoardLookup.getChar(index));
-                } else if(Piece.isBlack(BoardLookup.getCode(index))) {
-                    red(BoardLookup.getChar(index));
+                code = Board.get(index);
+
+                // check that Board @ index (which holds a code) matches 
+                // long bitboard = Bitboard.get(Board.get(index));
+                // long other = (1L << index);
+
+                // Board.get(index) -> code
+                // Bitboard.get(Board.get(index)) & (1L << index)
+
+
+                if((Bitboard.get(Board.get(index)) & (1L << index)) == 0) {
+                    String expected = "";
+                    for(int k = 0; k < Enum.LENGTH; k++) {
+                        if((Bitboard.get(k) & (1L << index)) != 0) {
+                            if(expected.equals("")) {
+                                expected += Enum.codeToString(k);
+                            } else {
+                                expected += "/" + Enum.codeToString(k);
+                            }
+                        }
+                    }
+
+                    System.out.println("\n\nWARNING: At index " + index + ": Missmatched Board and Bitboard data structures. " +
+                        "Expected \"" + expected + "\", but found \"" + Board.getString(index) + "\" instead.");
+
+                    return;
+                } else 
+                if(Piece.isWhite(code)) {
+                    blue(Board.getString(index));
+                } else if(Piece.isBlack(code)) {
+                    red(Board.getString(index));
                 } else {
                     System.out.print(".");
                 }
@@ -44,38 +72,44 @@ public class Printer {
         System.out.println("\n   a b c d e f g h\n");
     }
 
-    public static void bitboard(String param) {
-        String[] fields = param.split(" ");
-        int key = 0;
-        for(int i = 0; i < fields.length; i++) {
-            if(!Piece.map.containsKey(fields[i])) {
-                System.out.println("Unknown parameter(s) \"" + param + "\". Type help for more information.");
+    public static void bitboard(String paramString) {
+        String[] params = paramString.split(" ");
+
+        for(String param : params) {
+            if(param.equals("help")) {
+                System.out.println("\nType \"print\" followed by named bitboards separated by spaces (e.g. \"print wpawn bking\")" +
+                    "\nto print white pawn and black king bitboards. Use FEN piece notation (e.g. P or k) or\n" + 
+                    "\"w\" or \"b\" followed by the piece name (e.g. \"wpawn\" or \"bking\"). Type \"print\" for full board.\n");
+
                 return;
-            } else {
-                key += Piece.get(fields[i]);
             }
-        }
+            int key = Enum.stringToCode(param);
 
-        long bitboard = Bitboard.get(key);
+            if(key != -1) {
+                long bitboard = Bitboard.get(key);
 
-        System.out.println("\n>> " + param);
+                System.out.println("\n>> " + param);
 
-        for(int i = 7; i >= 0; i--) {
-            for(int j = 0; j < 8; j++) {
-                int index = i * 8 + j;
-                int currentBit = (int) (bitboard >> index & 1);
+                for(int i = 7; i >= 0; i--) {
+                    for(int j = 0; j < 8; j++) {
+                        int index = i * 8 + j;
+                        int currentBit = (int) (bitboard >> index & 1);
 
-                System.out.print(" ");
+                        System.out.print(" ");
 
-                if(currentBit == 1) {
-                    purple('1');
-                } else {
-                    System.out.print(".");
+                        if(currentBit == 1) {
+                            purple("1");
+                        } else {
+                            System.out.print(".");
+                        }
+                    }
+                    System.out.println();
                 }
+                System.out.println();
+            } else {
+                System.out.println("Unknown bitboard \"" + param + "\". Type \"print help\" for more.");
             }
-            System.out.println();
         }
-        System.out.println();
     }
 
     public static void bitboard(long bitboard, String label) {
@@ -89,7 +123,7 @@ public class Printer {
                 System.out.print(" ");
 
                 if(currentBit == 1) {
-                    purple('1');
+                    purple("1");
                 } else {
                     System.out.print(".");
                 }
@@ -99,15 +133,15 @@ public class Printer {
         System.out.println();
     }
 
-    private static void red(char str) {
+    private static void red(String str) {
         System.out.print(RED + str + WHITE);
     }
 
-    private static void blue(char str) {
+    private static void blue(String str) {
         System.out.print(BLUE + str + WHITE);
     }
 
-    private static void purple(char str) {
+    private static void purple(String str) {
         System.out.print(PURPLE + str + WHITE);
     }
 }

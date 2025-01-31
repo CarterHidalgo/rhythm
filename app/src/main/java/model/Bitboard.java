@@ -7,92 +7,84 @@
 
 package model;
 
-import helper.Bit;
+import helper.Enum;
 import helper.FEN;
 
 public class Bitboard {
-    private static long[] bitboards = new long[20];
+    private static long[] bitboards = new long[21];
 
-    public static long get(int key) {
-        return bitboards[key];
+    public static long get(int code) {
+        return bitboards[code];
     }
 
-    public static long getSelf(int key) {
-        return bitboards[(GameInfo.getTurn() ? Piece.WHITE : Piece.BLACK) + key];
+    public static long getSelf(int code) {
+        return bitboards[(GameInfo.getTurn() ? Enum.WHITE : Enum.BLACK) + code];
     }
 
     public static long getSelf() {
-        return bitboards[GameInfo.getTurn() ? Piece.WHITE : Piece.BLACK];
+        return bitboards[GameInfo.getTurn() ? Enum.WHITE : Enum.BLACK];
     }
 
-    public static long getOp(int key) {
-        return bitboards[(GameInfo.getTurn() ? Piece.BLACK : Piece.WHITE) + key];
+    public static long getOp(int code) {
+        return bitboards[(GameInfo.getTurn() ? Enum.BLACK : Enum.WHITE) + code];
     }
 
     public static long getOp() {
-        return bitboards[GameInfo.getTurn() ? Piece.BLACK : Piece.WHITE];
+        return bitboards[GameInfo.getTurn() ? Enum.BLACK : Enum.WHITE];
     }
 
-    public static void set(int key, long value) {
-        bitboards[key] = value;
+    public static void set(int code, long value) {
+        bitboards[code] = value;
+    }
+
+    public static void toggle(int code, long bitboard) {
+        bitboards[code] ^= bitboard;
     }
 
     public static void setWithFEN(FEN fen) {
         int rank = 7;
         int file = 0;
-        long bitboard = 0;
 
-        clearAll();
-
-        for(char c : fen.getFEN().toCharArray()) {
-            if(c == '/') {
+        for (char c : fen.getFEN().toCharArray()) {
+            if (c == '/') {
                 rank--;
                 file = 0;
-            } else if(Character.isDigit(c)) {
+            } else if (Character.isDigit(c)) {
                 file += Character.getNumericValue(c);
             } else {
-                int key = Piece.get(Character.toString(c));
-                set(key, Bit.set(get(key), rank * 8 + file++));
+                int code = Enum.stringToCode(Character.toString(c));
+
+                bitboards[code] ^= 1L << (rank * 8 + file++);
             }
         }
 
-        bitboard = 0L;
-        for(int i = Piece.WHITE + Piece.PAWN; i <= Piece.WHITE + Piece.KING; i++) {
-            bitboard |= get(i);
+        for (int i = Enum.WHITE + Enum.PAWN; i <= Enum.WHITE + Enum.KING; i++) {
+            bitboards[Enum.WHITE] |= bitboards[i];
         }
-        set(Piece.WHITE, bitboard);
 
-        bitboard = 0L;
-        for(int i = Piece.BLACK + Piece.PAWN; i <= Piece.BLACK + Piece.KING; i++) {
-            bitboard |= get(i);
+        for (int i = Enum.BLACK + Enum.PAWN; i <= Enum.BLACK + Enum.KING; i++) {
+            bitboards[Enum.BLACK] |= bitboards[i];
         }
-        set(Piece.BLACK, bitboard);
 
-        set(Piece.OCCUPIED, get(Piece.WHITE | Piece.BLACK));
-        set(Piece.EMPTY, ~get(Piece.OCCUPIED));
+        bitboards[Enum.OCCUPIED] = bitboards[Enum.WHITE] | bitboards[Enum.BLACK];
+        bitboards[Enum.EMPTY] = ~bitboards[Enum.OCCUPIED];
 
-        if(!fen.getEp().equals("-")) {
+        bitboards[Enum.WHITE + Enum.HOME] = 0xFF00L;
+        bitboards[Enum.BLACK + Enum.HOME] = 0xFF000000000000L;
+        bitboards[Enum.WHITE + Enum.PROMO] = 0xFF00000000000000L;
+        bitboards[Enum.BLACK + Enum.PROMO] = 0xFFL;
+
+        if (!fen.getEp().equals("-")) {
             System.out.println("Bitboard.java -> setWithFEN; setup ep bitboard by move");
         }
     }
 
-    public static void create() {
-        for(int i = 0; i < bitboards.length; i++) {
-            bitboards[i] = 0L;
-        }
-
-        bitboards[Piece.WHITE + Piece.HOME] = 0xFF00L;
-        bitboards[Piece.BLACK + Piece.HOME] = 0xFF000000000000L;
-        bitboards[Piece.WHITE + Piece.PROMO] = 0xFF00000000000000L;
-        bitboards[Piece.BLACK + Piece.PROMO] = 0xFFL;
-    }
-
-    public static void clear(int key) {
-        bitboards[key] = 0L;
+    public static void clear(int code) {
+        bitboards[code] = 0L;
     }
 
     public static void clearAll() {
-        for(int i = 0; i < bitboards.length; i++) {
+        for (int i = 0; i < bitboards.length; i++) {
             bitboards[i] = 0L;
         }
     }

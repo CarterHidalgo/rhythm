@@ -1,4 +1,4 @@
-plays chess ig
+plays chess (chess coming soon)
 
 commands:
 

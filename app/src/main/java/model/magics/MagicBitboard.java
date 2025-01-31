@@ -10,8 +10,8 @@ package model.magics;
 import java.util.ArrayList;
 import helper.Bit;
 import helper.Coord;
+import helper.Enum;
 import model.Bitboard;
-import model.Piece;
 
 public class MagicBitboard {
     /*
@@ -129,11 +129,11 @@ public class MagicBitboard {
     }
 
     public static long getRookMoves(int square) {
-        return attacks[attacksOffsets[square] + (lookups[transform(Bitboard.get(Piece.OCCUPIED) & MagicBitboardMask.getRookMask(square), MagicNumbers.ROOK_MAGICS[square], rookShift[square]) + lookupsOffsets[square]] & 0xFF)];
+        return attacks[attacksOffsets[square] + (lookups[transform(Bitboard.get(Enum.OCCUPIED) & MagicBitboardMask.getRookMask(square), MagicNumbers.ROOK_MAGICS[square], rookShift[square]) + lookupsOffsets[square]] & 0xFF)];
     }
 
     public static long getBishopMoves(int square) {
-        return attacks[attacksOffsets[square + 64] + (lookups[transform(Bitboard.get(Piece.OCCUPIED) & MagicBitboardMask.getBishopMask(square), MagicNumbers.BISHOP_MAGICS[square], bishopShift[square]) + lookupsOffsets[square + 64]] & 0xFF)];
+        return attacks[attacksOffsets[square + 64] + (lookups[transform(Bitboard.get(Enum.OCCUPIED) & MagicBitboardMask.getBishopMask(square), MagicNumbers.BISHOP_MAGICS[square], bishopShift[square]) + lookupsOffsets[square + 64]] & 0xFF)];
     }
 
     public static long getQueenMoves(int square) {
@@ -260,7 +260,8 @@ public class MagicBitboard {
                 Coord attackCoord = startSquare.add(dir.mul(dist));
                 
                 if(attackCoord.isValid()) {
-                    attack = Bit.set(attack, attackCoord.getIndex());
+                    // attack = Bit.set(attack, attackCoord.getIndex());
+                    attack |= (1L << attackCoord.getIndex());
                     
                     if(Bit.isSet(config, attackCoord.getIndex())) {
                         break;
