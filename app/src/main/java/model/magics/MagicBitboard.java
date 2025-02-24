@@ -260,7 +260,6 @@ public class MagicBitboard {
                 Coord attackCoord = startSquare.add(dir.mul(dist));
                 
                 if(attackCoord.isValid()) {
-                    // attack = Bit.set(attack, attackCoord.getIndex());
                     attack |= (1L << attackCoord.getIndex());
                     
                     if(Bit.isSet(config, attackCoord.getIndex())) {

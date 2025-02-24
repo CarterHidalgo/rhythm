@@ -2,7 +2,7 @@
  * Name: ModelMain.java
  * Author: Pigpen
  * 
- * Purpose: To provide high-level methods for manipulating the engine model
+ * Purpose: Provide high-level methods for manipulating the engine
  */
 
 package model;
@@ -11,6 +11,7 @@ import helper.FEN;
 import model.magics.MagicBitboard;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class Model {
     private static volatile boolean isRunning = true;
@@ -18,7 +19,7 @@ public class Model {
     private static final Object lock = new Object();
 
     public static void init() {
-        FEN start = new FEN();
+        FEN start = new FEN(FEN.START_FEN);
 
         Bitboard.setWithFEN(start);
         Board.setWithFEN(start);
@@ -58,6 +59,7 @@ public class Model {
 
         Bitboard.setWithFEN(fenObj);
         Board.setWithFEN(fenObj);
+        GameInfo.setWithFEN(fenObj);
     }
 
     public static int perft(int depth) {
@@ -66,21 +68,29 @@ public class Model {
 
     public static int perft(int depth, boolean root) {
         ArrayList<Short> moves = MoveGeneration.gen();
+        ArrayList<String> output = new ArrayList<>();
 
         int nodes = 0;
         for(short move : moves) {
             if(Move.isLegal(move)) {
-                Move.make(move);
-                
-                return -1;
+                int state = GameState.create(move);
 
-                // int branchNodes = depth <= 1 ? 1 : perft(depth - 1, false);
-                // nodes += branchNodes;
+                Move.make(move, depth);
+
+                int branchNodes = depth <= 1 ? 1 : perft(depth - 1, false);
+                nodes += branchNodes;
                 
-                // if(root) {
-                //     System.out.println(Move.getAlgebraic(move) + ": " + branchNodes);
-                // }
+                if(root) {
+                    output.add(Move.getAlgebraic(move) + ": " + branchNodes);
+                }
+
+                Move.unmake(move, state);
             }
+        }
+
+        Collections.sort(output);
+        for(String s : output) {
+            System.out.println(s);
         }
 
         return nodes;

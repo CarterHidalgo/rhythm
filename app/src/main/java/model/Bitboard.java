@@ -45,6 +45,8 @@ public class Bitboard {
         int rank = 7;
         int file = 0;
 
+        clearAll();
+
         for (char c : fen.getFEN().toCharArray()) {
             if (c == '/') {
                 rank--;
@@ -54,7 +56,7 @@ public class Bitboard {
             } else {
                 int code = Enum.stringToCode(Character.toString(c));
 
-                bitboards[code] ^= 1L << (rank * 8 + file++);
+                bitboards[code] |= 1L << (rank * 8 + file++);
             }
         }
 

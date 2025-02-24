@@ -38,30 +38,48 @@ public class Move {
         return ((move & 0x3F));
     }
 
-    public static void make(short move) {
-        // push current state onto stack
+    public static int getFlags(short move) {
+        return ((move >> 12) & 0xF);
+    }
 
-        // apply move
-        System.out.println("applying " + Move.getAlgebraic(move));
-        
+    public static void make(short move, int depth) {
         int from = Move.getFrom(move);
         int to = Move.getTo(move);
         int piece = Board.get(from);
         int color = Piece.color(piece);
-        long fromBitboard = 1 << from;
-        long toBitboard = 1 << to;
+        long fromBitboard = 1L << from;
+        long toBitboard = 1L << to;
         long fromToBitboard = fromBitboard ^ toBitboard;
 
-
-        // quiet move
         Bitboard.toggle(piece, fromToBitboard);
         Bitboard.toggle(color, fromToBitboard);
         Bitboard.toggle(Enum.OCCUPIED, fromToBitboard);
         Bitboard.toggle(Enum.EMPTY, fromToBitboard);
+
+        Board.set(to, piece);
+        Board.set(from, Enum.EMPTY);
+
+        GameInfo.makeMove();
     }
 
-    public static void unmake() {
-        // restore state from stack
+    public static void unmake(short move, int state) {
+        int from = Move.getFrom(move);
+        int to = Move.getTo(move);
+        int piece = Board.get(to);
+        int color = Piece.color(piece);
+        long fromBitboard = 1L << from;
+        long toBitboard = 1L << to;
+        long fromToBitboard = fromBitboard ^ toBitboard;
+
+        Bitboard.toggle(piece, fromToBitboard);
+        Bitboard.toggle(color, fromToBitboard);
+        Bitboard.toggle(Enum.OCCUPIED, fromToBitboard);
+        Bitboard.toggle(Enum.EMPTY, fromToBitboard);
+
+        Board.set(from, piece);
+        Board.set(to, Enum.EMPTY);
+
+        GameInfo.unmakeMove();
     }
 
     public static boolean isLegal(short move) {

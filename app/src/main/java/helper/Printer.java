@@ -33,14 +33,6 @@ public class Printer {
 
                 code = Board.get(index);
 
-                // check that Board @ index (which holds a code) matches 
-                // long bitboard = Bitboard.get(Board.get(index));
-                // long other = (1L << index);
-
-                // Board.get(index) -> code
-                // Bitboard.get(Board.get(index)) & (1L << index)
-
-
                 if((Bitboard.get(Board.get(index)) & (1L << index)) == 0) {
                     String expected = "";
                     for(int k = 0; k < Enum.LENGTH; k++) {

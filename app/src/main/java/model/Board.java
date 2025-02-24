@@ -17,7 +17,7 @@ public class Board {
         return board[index];
     }
 
-    public static void set(int index, byte code) {
+    public static void set(int index, int code) {
         board[index] = code; 
     }
 

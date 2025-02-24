@@ -2,7 +2,7 @@
  * Name: MoveGeneration.java
  * Author: Pigpen
  * 
- * Purpose: Create a list of all pseudo-legal moves given the current board state
+ * Purpose: Create a list of all pseudo-legal moves given the current position
  */
 
 package model;
@@ -202,20 +202,20 @@ public class MoveGeneration {
 
             self = Bit.clear(self, fromIndex);
 
-            if (GameInfo.getCastleRights(GameInfo.getTurn(), 0) &&
-                    Bit.isSet(Bitboard.getSelf(Enum.ROOK), fromIndex + 3) &&
-                    !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex + 1) &&
-                    !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex + 2)) {
-                moves.add(Move.create(fromIndex, fromIndex + 2, Move.KING_CASTLE));
-            }
+            // if (GameInfo.getCastleRights(GameInfo.getTurn(), 0) &&
+            //         Bit.isSet(Bitboard.getSelf(Enum.ROOK), fromIndex + 3) &&
+            //         !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex + 1) &&
+            //         !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex + 2)) {
+            //     moves.add(Move.create(fromIndex, fromIndex + 2, Move.KING_CASTLE));
+            // }
 
-            if (GameInfo.getCastleRights(GameInfo.getTurn(), 1) &&
-                    Bit.isSet(Bitboard.getSelf(Enum.ROOK), fromIndex + 3) &&
-                    !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex - 1) &&
-                    !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex - 2) &&
-                    !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex - 3)) {
-                moves.add(Move.create(fromIndex, fromIndex - 2, Move.QUEEN_CASTLE));
-            }
+            // if (GameInfo.getCastleRights(GameInfo.getTurn(), 1) &&
+            //         Bit.isSet(Bitboard.getSelf(Enum.ROOK), fromIndex + 3) &&
+            //         !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex - 1) &&
+            //         !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex - 2) &&
+            //         !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex - 3)) {
+            //     moves.add(Move.create(fromIndex, fromIndex - 2, Move.QUEEN_CASTLE));
+            // }
         }
     }
 }
