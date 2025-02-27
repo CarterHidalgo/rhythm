@@ -1,6 +1,5 @@
 /*
- * Name: Bit.java
- * Author: Pigpen
+ * Author: Carter Hidalgo
  * 
  * Purpose: Provide access to common or complex binary opperations
  */
@@ -10,7 +9,7 @@ package engine.helper;
 public class Bit {
     public static long set(long value, int index) {
         long mask = 1L << index;
-        
+
         return value | mask;
     }
 

@@ -1,6 +1,5 @@
 /*
- * Name: KingAttacks.java
- * Author: Pigpen
+ * Author: Carter Hidalgo
  * 
  * Purpose: Constant time lookup for all possible king attacks on any square
  */

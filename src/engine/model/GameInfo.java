@@ -1,8 +1,8 @@
 /*
- * Name: GameInfo.java
- * Author: Pigpen
+ * Author: Carter Hidalgo
  * 
- * Purpose: Contains information about the current game; nothing aside from the class variables should ever be modified here. 
+ * Purpose: Contains information about the current game; nothing aside from the class variables
+ * should ever be modified here.
  */
 
 package engine.model;

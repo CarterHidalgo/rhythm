@@ -1,5 +1,5 @@
 /*
- * Name: Bitboard.java Author: Pigpen
+ * Author: Carter Hidalgo
  * 
  * Purpose: Contains dynamic and static bitboards as well as the methods for getting and setting
  * them

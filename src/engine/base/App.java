@@ -1,5 +1,5 @@
 /*
- * Name: App.java Author: Pigpen
+ * Author: Carter Hidalgo
  * 
  * Purpose: Start the UCI thread and initialize engine model
  */

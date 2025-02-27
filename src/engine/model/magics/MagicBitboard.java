@@ -1,6 +1,5 @@
 /*
- * Name: MagicBitboard.java
- * Author: Pigpen
+ * Author: Carter Hidalgo
  * 
  * Purpose: Provide constant time attack lookups for sliding pieces - see below for implementation and compacting scheme details
  */

@@ -1,6 +1,5 @@
 /*
- * Name: GoParameters.java Author: FrequentlyMissedDeadlines
- * (https://github.com/FrequentlyMissedDeadlines/Chess-UCI) Thanks! =]
+ * Author: FrequentlyMissedDeadlines (https://github.com/FrequentlyMissedDeadlines/Chess-UCI)
  * 
  * Purpose: Contains parameters and getters for the UCI 'go' command
  */

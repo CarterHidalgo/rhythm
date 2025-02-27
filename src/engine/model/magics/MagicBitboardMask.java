@@ -1,6 +1,5 @@
 /*
- * Name: MagicBitboardMask.java
- * Author: Pigpen
+ * Author: Carter Hidalgo
  * 
  * Purpose: Provide constant time lookups for per square blocker masks for magic bitboards
  */

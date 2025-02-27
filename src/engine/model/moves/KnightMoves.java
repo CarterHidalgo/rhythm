@@ -1,6 +1,5 @@
 /*
- * Name: KnightAttacks.java
- * Author: Pigpen
+ * Author: Carter Hidalgo
  * 
  * Purpose: Constant time lookup for all possible knight attacks on any square
  */

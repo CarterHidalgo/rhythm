@@ -1,5 +1,5 @@
 /*
- * Name: MoveGeneration.java Author: Pigpen
+ * Author: Carter Hidalgo
  * 
  * Purpose: Create a list of all pseudo-legal moves given the current position
  */

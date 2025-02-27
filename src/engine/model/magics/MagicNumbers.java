@@ -1,6 +1,5 @@
 /*
- * Name: MagicNumbers.java
- * Author: Pigpen
+ * Author: Carter Hidalgo
  * 
  * Purpose: Provide constant time lookups for rook and bishop magic numbers
  */

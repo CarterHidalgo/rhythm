@@ -1,8 +1,8 @@
 /*
- * Name: Enum.java
- * Author: Pigpen
+ * Author: Carter Hidalgo
  * 
- * Purpose: Provides enums for pieces/bitboards and methods for converting from char/String to int values
+ * Purpose: Provides enums for pieces/bitboards and methods for converting from char/String to int
+ * values
  */
 
 package engine.helper;

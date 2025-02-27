@@ -1,8 +1,8 @@
 /*
- * Name: Move.java
- * Author: Pigpen
+ * Author: Carter Hidalgo
  * 
- * Purpose: Contains move type flag bitcodes and methods for creating, making, unmaking, or printing moves (shorts)
+ * Purpose: Contains move type flag bitcodes and methods for creating, making, unmaking, or printing
+ * moves (shorts)
  */
 
 package engine.model;

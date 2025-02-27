@@ -1,7 +1,7 @@
 /*
- * Name: Coord.java
- * Author: Adapted from Sebastian Lague 
- *  (https://github.com/SebLague/Chess-Coding-Adventure/blob/Chess-V2-UCI/Chess-Coding-Adventure/src/Core/Board/Coord.cs) Thanks! =]
+ * Author: Adapted from Sebastian Lague
+ * (https://github.com/SebLague/Chess-Coding-Adventure/blob/Chess-V2-UCI/Chess-Coding-Adventure/src/
+ * Core/Board/Coord.cs) 
  * 
  * Purpose: Traverse the board directionally and safely without falling off
  */
@@ -9,8 +9,10 @@
 package engine.helper;
 
 public class Coord {
-    public static final Coord[] rookDirections = {new Coord(1, 0), new Coord(0, 1), new Coord(-1, 0), new Coord(0, -1)};
-    public static final Coord[] bishopDirections = {new Coord(1, 1), new Coord(-1, 1), new Coord(-1, -1), new Coord(1, -1)};
+    public static final Coord[] rookDirections =
+            {new Coord(1, 0), new Coord(0, 1), new Coord(-1, 0), new Coord(0, -1)};
+    public static final Coord[] bishopDirections =
+            {new Coord(1, 1), new Coord(-1, 1), new Coord(-1, -1), new Coord(1, -1)};
 
     private int rank;
     private int file;

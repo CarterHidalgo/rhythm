@@ -1,6 +1,5 @@
 /*
- * Name: Printer.java
- * Author: Pigpen
+ * Author: Carter Hidalgo
  * 
  * Purpose: To visually represent in the terminal data structures for debugging purposes
  */

@@ -1,6 +1,5 @@
 /*
- * Name: Piece.java
- * Author: Pigpen
+ * Author: Carter Hidalgo
  * 
  * Purpose: Methods for understanding piece properties like color
  */

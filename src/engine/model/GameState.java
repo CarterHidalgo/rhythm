@@ -1,6 +1,5 @@
 /*
- * Name: GameState.java
- * Author: Pigpen
+ * Author: Carter Hidalgo
  * 
  * Purpose: Stores the minimum amount of game state information for make/unmake
  */

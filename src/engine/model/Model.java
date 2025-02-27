@@ -1,6 +1,5 @@
 /*
- * Name: ModelMain.java
- * Author: Pigpen
+ * Author: Carter Hidalgo
  * 
  * Purpose: Provide high-level methods for manipulating the engine
  */

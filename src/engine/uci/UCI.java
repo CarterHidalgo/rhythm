@@ -1,6 +1,5 @@
 /*
- * Name: UciProtocol.java Author: FrequentlyMissedDeadlines
- * (https://github.com/FrequentlyMissedDeadlines/Chess-UCI) Thanks! =]
+ * Author: FrequentlyMissedDeadlines (https://github.com/FrequentlyMissedDeadlines/Chess-UCI)
  * 
  * Purpose: Starts and manages UCI threads, inputs, and outputs; interacts with the model via
  * UciListener listener
@@ -50,8 +49,8 @@ public class UCI {
             patternWhiteTimeIncr, patternBlackTime, patternBlackTimeIncr, patternMovesToGo,
             patternDepth, patternNodes, patternMate, patternMovetime, patternPerft};
 
-    private static final String name = "rhythm";
-    private static final String author = "Pigpen";
+    private static final String name = "Rhythm";
+    private static final String author = "Carter Hidalgo";
 
     private static Thread uciThread;
 

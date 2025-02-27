@@ -1,5 +1,5 @@
 /*
- * Name: Board.java Author: Pigpen
+ * Author: Carter Hidalgo
  * 
  * Purpose: Provide constant time lookup for what piece is on a square given a square index in the
  * range [0-63]

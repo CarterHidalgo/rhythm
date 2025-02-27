@@ -1,3 +1,9 @@
+/*
+ * Author: Carter Hidalgo
+ * 
+ * Purpose: Give integer indices into the 0-63 board for the different directions and amounts a piece can move
+ */
+
 package engine.helper;
 
 import engine.model.GameInfo;

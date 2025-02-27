@@ -1,6 +1,5 @@
 /*
- * Name: Autoperft.java Author: Pigpen (based on code from sohamkorade:
- * https://github.com/sohamkorade/autoperft)
+ * Author: Carter Hidalgo (based on code from sohamkorade: https://github.com/sohamkorade/autoperft)
  * 
  * Purpose: Run automatic perft tests and bisect missing or extra moves
  */
@@ -92,9 +91,9 @@ public class Autoperft {
 
     private static void openProcess() {
         try {
-            process = processBuilder.start();
-            writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
-            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            // process = processBuilder.start();
+            // writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
+            // reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             input = new Scanner(perftsuitePath);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -104,14 +103,14 @@ public class Autoperft {
     }
 
     private static void closeProcess() {
-        try {
-            writer.close();
-            reader.close();
-            input.close();
-            process.destroy();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // try {
+        // process.destroy();
+        // writer.close();
+        // reader.close();
+        input.close();
+        // } catch (IOException e) {
+        // e.printStackTrace();
+        // }
     }
 
     private static void loadTests() {

@@ -1,6 +1,5 @@
 /*
- * Name: FEN.java
- * Author: Pigpen
+ * Author: Carter Hidalgo
  * 
  * Purpose: Provides methods for safely parsing data out of a FEN string; if no value is found a default is provided
  */
