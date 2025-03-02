@@ -42,14 +42,15 @@ public class UCI {
     private static final Pattern patternMate = Pattern.compile(".*mate (\\d+) .*");
     private static final Pattern patternMovetime = Pattern.compile(".*movetime (\\d+).*");
     private static final Pattern patternPerft = Pattern.compile("perft ([1-9]|[1-9]\\\\d).*");
-    private static final Pattern positionPattern =
+    private static final Pattern patternTeacher = Pattern.compile("teacher\\s+[\\w\\s\\\\./:-]+\\.exe");
+    private static final Pattern patternPosition =
             Pattern.compile("(?:fen (?<fen>.* \\d+ \\d+)|startpos)(?: moves (?<moves>.*))?");
 
     private static final Pattern[] goNumeralPatterns = new Pattern[] {patternWhiteTime,
             patternWhiteTimeIncr, patternBlackTime, patternBlackTimeIncr, patternMovesToGo,
             patternDepth, patternNodes, patternMate, patternMovetime, patternPerft};
 
-    private static final String name = "Rhythm";
+    private static final String name = "rhythm";
     private static final String author = "Carter Hidalgo";
 
     private static Thread uciThread;
@@ -125,7 +126,7 @@ public class UCI {
     private static void position(String position) {
         String[] moves;
         String startingPosition = FEN.START_FEN;
-        Matcher matcher = positionPattern.matcher(position);
+        Matcher matcher = patternPosition.matcher(position);
 
         if (matcher.matches()) {
             if (matcher.group("fen") != null) {
@@ -199,10 +200,15 @@ public class UCI {
 
     private static void autoperft(String param) {
         if (param.equals("")) {
-            Autoperft.test();
+            Autoperft.test("");
         } else {
-            FEN fen = new FEN(param);
-            Autoperft.test(fen);
+            Matcher matcher = patternTeacher.matcher(param);
+
+            if(matcher.matches()) {
+                Autoperft.test(param.substring(8, param.length()));
+            } else {
+                Autoperft.test(new FEN(param));
+            }
         }
     }
 

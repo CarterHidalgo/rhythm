@@ -9,7 +9,7 @@ package engine.model;
 
 import engine.helper.Bit;
 import engine.helper.Enum;
-import engine.helper.Printer;
+// import engine.helper.Printer;
 
 public class Move {
     public static final byte QUIET = 0b0000;
@@ -46,8 +46,8 @@ public class Move {
 
         GameInfo.makeMove();
 
-        System.out.println(Move.getAlgebraic(move));
-        Printer.board();
+        // System.out.println(Move.getAlgebraic(move));
+        // Printer.board();
     }
 
     public static void unmake(short move, int state) {
@@ -69,7 +69,7 @@ public class Move {
 
         GameInfo.unmakeMove();
 
-        Printer.board();
+        // Printer.board();
     }
 
     public static short create(int from, int to, int flags) {
@@ -97,7 +97,7 @@ public class Move {
     }
 
     public static String getIndexed(short move) {
-        byte fromIndex = (byte) (move & 0b111111); 
+        byte fromIndex = (byte) (move & 0b111111);
         byte toIndex = (byte) ((move >> 6) & 0b111111);
         byte flags = (byte) ((move >> 12) & 0b1111);
 
@@ -105,7 +105,7 @@ public class Move {
     }
 
     public static String getAlgebraic(short move) {
-        byte fromIndex = (byte) (move & 0b111111); 
+        byte fromIndex = (byte) (move & 0b111111);
         byte toIndex = (byte) ((move >> 6) & 0b111111);
         byte flags = (byte) ((move >> 12) & 0b1111);
 
@@ -119,8 +119,8 @@ public class Move {
     }
 
     private static String flagsToAlgebraic(byte flags) {
-        if(Bit.isSet(flags, 3)) {
-            switch(flags) {
+        if (Bit.isSet(flags, 3)) {
+            switch (flags) {
                 case KNIGHT_PROMO:
                 case KNIGHT_PROMO_CAPTURE:
                     return "n";

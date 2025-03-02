@@ -11,6 +11,7 @@ import engine.model.magics.MagicBitboard;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class Model {
     private static volatile boolean isRunning = true;
@@ -66,8 +67,8 @@ public class Model {
     }
 
     public static int perft(int depth, boolean root, boolean print) {
-        ArrayList<Short> moves = MoveGeneration.gen();
-        ArrayList<String> output = new ArrayList<>();
+        List<Short> moves = MoveGeneration.gen();
+        List<String> output = new ArrayList<>();
 
         int nodes = 0;
         for(short move : moves) {

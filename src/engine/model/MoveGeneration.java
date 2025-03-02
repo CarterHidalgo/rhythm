@@ -7,7 +7,7 @@
 package engine.model;
 
 import java.util.ArrayList;
-
+import java.util.List;
 import engine.helper.Bit;
 import engine.helper.Enum;
 import engine.helper.Offset;
@@ -16,8 +16,8 @@ import engine.model.moves.KingMoves;
 import engine.model.moves.KnightMoves;
 
 public class MoveGeneration {
-    public static ArrayList<Short> gen() {
-        ArrayList<Short> moves = new ArrayList<>();
+    public static List<Short> gen() {
+        List<Short> moves = new ArrayList<>();
 
         addPawnMoves(moves);
         addKnightMoves(moves);
@@ -29,7 +29,7 @@ public class MoveGeneration {
         return moves;
     }
 
-    private static void addPawnMoves(ArrayList<Short> moves) {
+    private static void addPawnMoves(List<Short> moves) {
         long self = Bitboard.getSelf(Enum.PAWN);
         int index;
 
@@ -84,7 +84,7 @@ public class MoveGeneration {
         }
     }
 
-    private static void addKnightMoves(ArrayList<Short> moves) {
+    private static void addKnightMoves(List<Short> moves) {
         long to;
         long self = Bitboard.getSelf(Enum.KNIGHT);
         int fromIndex, toIndex;
@@ -109,7 +109,7 @@ public class MoveGeneration {
         }
     }
 
-    private static void addBishopMoves(ArrayList<Short> moves) {
+    private static void addBishopMoves(List<Short> moves) {
         long to;
         long self = Bitboard.getSelf(Enum.BISHOP);
         int fromIndex, toIndex;
@@ -134,7 +134,7 @@ public class MoveGeneration {
         }
     }
 
-    private static void addRookMoves(ArrayList<Short> moves) {
+    private static void addRookMoves(List<Short> moves) {
         long to;
         long self = Bitboard.getSelf(Enum.ROOK);
         int fromIndex, toIndex;
@@ -159,7 +159,7 @@ public class MoveGeneration {
         }
     }
 
-    private static void addQueenMoves(ArrayList<Short> moves) {
+    private static void addQueenMoves(List<Short> moves) {
         long to;
         long self = Bitboard.getSelf(Enum.QUEEN);
         int fromIndex, toIndex;
@@ -184,7 +184,7 @@ public class MoveGeneration {
         }
     }
 
-    private static void addKingMoves(ArrayList<Short> moves) {
+    private static void addKingMoves(List<Short> moves) {
         long to;
         long self = Bitboard.getSelf(Enum.KING);
         int fromIndex, toIndex;
