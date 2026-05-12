@@ -33,12 +33,26 @@ public class Bitboard {
         return bitboards[GameInfo.getTurn() ? Enum.BLACK : Enum.WHITE];
     }
 
-    public static void set(int code, long value) {
-        bitboards[code] = value;
+    public static void set(int code, int index) {
+        bitboards[code] |= 1L << index;
+    }
+
+    public static void clear(int code, int index) {
+        bitboards[code] &= ~(1L << index);
     }
 
     public static void toggle(int code, long bitboard) {
         bitboards[code] ^= bitboard;
+    }
+
+    public static void toggle(long bitboard, int... codes) {
+        for(int code : codes) {
+            bitboards[code] ^= bitboard;
+        }
+    }
+
+    public static void set(int code, long value) {
+        bitboards[code] = value;
     }
 
     public static void setWithFEN(FEN fen) {

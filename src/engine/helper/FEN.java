@@ -8,11 +8,11 @@ package engine.helper;
 
 public class FEN {
     public static final String[] COMMON_FENS = {
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", // [0] starting position
-            "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1" // [1] kiwipete
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", // [0] starting position
+        "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1" // [1] kiwipete
     };
 
-    public static final String START_FEN = COMMON_FENS[1];
+    public static final String START_FEN = COMMON_FENS[0];
 
     private StringBuilder fen;
     private StringBuilder turn;

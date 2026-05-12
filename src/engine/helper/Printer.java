@@ -55,7 +55,6 @@ public class Printer {
                     System.out.println("\n\nWARNING: At index " + index + ": Missmatched Board and Bitboard data structures. " +
                         "Expected \"" + expected + "\" in Board, but found \"" + Board.getString(index) + "\" instead.");
 
-                    System.exit(1);
                     return;
                 } else if(Piece.isWhite(code)) {
                     blue(Board.getString(index));
@@ -109,6 +108,10 @@ public class Printer {
                 System.out.println("Unknown bitboard \"" + param + "\". Type \"print help\" for more.");
             }
         }
+    }
+
+    public static void bitboard(int code) {
+        bitboard(Enum.codeToString(code));
     }
 
     public static void bitboard(long bitboard, String label) {

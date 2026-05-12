@@ -9,17 +9,16 @@ package engine.uci;
 
 import java.io.PrintStream;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.Scanner;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Scanner;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.Optional;
 import java.util.stream.Collectors;
-
 import engine.helper.Autoperft;
 import engine.helper.FEN;
 import engine.helper.Printer;
@@ -83,7 +82,7 @@ public class UCI {
 
             if (commands.containsKey(command)) {
                 commands.get(command).accept(params);
-            } else {
+            } else if(!command.isBlank()) {
                 out.println("Unknown command \"" + command + "\". Type help for more information.");
             }
         }
@@ -123,22 +122,22 @@ public class UCI {
         out.println("readyok");
     }
 
-    private static void position(String position) {
-        String[] moves;
-        String startingPosition = FEN.START_FEN;
-        Matcher matcher = patternPosition.matcher(position);
+    private static void position(String params) {
+        String[] moves = null;
+        String fenStr = FEN.START_FEN;
+        Matcher matcher = patternPosition.matcher(params);
 
         if (matcher.matches()) {
             if (matcher.group("fen") != null) {
-                startingPosition = matcher.group("fen");
+                fenStr = matcher.group("fen");
             }
 
             if (matcher.group("moves") != null) {
                 moves = matcher.group("moves").split(" ");
             }
-        }
 
-        System.out.println("[TODO]: set position with moves");
+            Model.setPosition(fenStr, moves != null ? Arrays.stream(moves).collect(Collectors.toCollection(LinkedList::new)) : null);
+        }
     }
 
     private static void go(String params) {
@@ -165,7 +164,7 @@ public class UCI {
             }
 
             long start = System.nanoTime();
-            int nodes = Model.perft(goParameters.getPerft().get(), true);
+            int nodes = Model.perft(goParameters.getPerft().get(), true).getNodes();
             long taken = System.nanoTime() - start;
 
             if (nodes > 0) {

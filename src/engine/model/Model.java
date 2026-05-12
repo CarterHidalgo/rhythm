@@ -6,12 +6,13 @@
 
 package engine.model;
 
-import engine.helper.FEN;
-import engine.model.magics.MagicBitboard;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Queue;
+import engine.helper.FEN;
+import engine.helper.Pair;
+import engine.model.magics.MagicBitboard;
 
 public class Model {
     private static volatile boolean isRunning = true;
@@ -30,9 +31,9 @@ public class Model {
 
     public static void setReady(boolean isReady) {
         Model.isReady = isReady;
-        
-        synchronized(lock) {
-            if(isReady) {
+
+        synchronized (lock) {
+            if (isReady) {
                 lock.notifyAll();
             }
         }
@@ -54,47 +55,61 @@ public class Model {
         return lock;
     }
 
-    public static void setPosition(String fenStr) {
+    public static void setPosition(String fenStr, Queue<String> moves) {
         FEN fenObj = new FEN(fenStr);
 
         Bitboard.setWithFEN(fenObj);
         Board.setWithFEN(fenObj);
         GameInfo.setWithFEN(fenObj);
+
+        while (moves != null && !moves.isEmpty()) {
+            List<Short> moveList = MoveGeneration.gen();
+
+            for (Short move : moveList) {
+                if (Move.getAlgebraic(move).equals(moves.peek())) {
+                    Move.make(move);
+
+                    if (moves.size() > 1) {
+                        moves.poll();
+                        break;
+                    } else {
+                        return;
+                    }
+                }
+            }
+        }
+
     }
 
-    public static int perft(int depth, boolean print) {
+    public static Pair perft(int depth, boolean print) {
         return perft(depth, true, print);
     }
 
-    public static int perft(int depth, boolean root, boolean print) {
+    public static Pair perft(int depth, boolean root, boolean print) {
         List<Short> moves = MoveGeneration.gen();
         List<String> output = new ArrayList<>();
 
         int nodes = 0;
-        for(short move : moves) {
-            if(true) {
-                int state = GameState.create(move);
+        for (short move : moves) {
+            Move.make(move);
 
-                Move.make(move, depth);
+            int branchNodes = depth <= 1 ? 1 : perft(depth - 1, false, print).getNodes();
+            nodes += branchNodes;
 
-                int branchNodes = depth <= 1 ? 1 : perft(depth - 1, false, print);
-                nodes += branchNodes;
-                
-                if(root) {
-                    output.add(Move.getAlgebraic(move) + ": " + branchNodes);
-                }
-
-                Move.unmake(move, state);
+            if (root) {
+                output.add(Move.getAlgebraic(move) + ": " + branchNodes);
             }
+
+            Move.unmake(move);
         }
 
-        if(print) {
+        if (print) {
             Collections.sort(output);
-            for(String s : output) {
+            for (String s : output) {
                 System.out.println(s);
             }
         }
 
-        return nodes;
+        return new Pair(output, nodes);
     }
 }

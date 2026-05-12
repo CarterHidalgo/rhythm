@@ -6,7 +6,7 @@
 
 package engine.model;
 
-import engine.helper.Enum;
+import java.util.Stack;
 
 public class GameState {
     /*
@@ -19,42 +19,27 @@ public class GameState {
      * additional computation at unmake. 
      * 
      * ----------------------------------------
-     * | From square:     | 6 bits  |  0-5    |
-     * | To square:       | 6 bits  |  6-11   |
-     * | Flags:           | 4 bits  |  12-15  |
-     * | Castling rights: | 4 bits  |  16-19  |
-     * | EP square:       | 5 bits  |  20-24  |
-     * | Half-move clock: | 7 bits  |  25-31  |
+     * | Captured Piece:  | 5 bits  |  0-4    |
      * |--------------------------------------|
-     * | Total:           | 32 bits | 32 bits |
+     * | Total:           | -  bits | -  bits |
      * ----------------------------------------
+     * 
+     * 
      */
 
-    public static int create(short move) {
-        return ((Move.getFrom(move) & 0x3F) | ((Move.getTo(move) & 0x3F) << 6) | ((Move.getFlags(move) & 0xF) << 12) | ((GameInfo.getCastling() & 0xF) << 16) | ((int) ((Bitboard.get(Enum.EP) << 16) & 0x1F) << 20) | ((GameInfo.getHalfmoves() & 0x7F) << 25));
+    private static Stack<Integer> stateStack = new Stack<>();
+
+    public static void push(short move) {
+        stateStack.push( 
+            (Board.get(Move.getTo(move)) & 0x1F) 
+        );
     }
 
-    public static int getFrom(int state) {
-        return ((state & 0x3F));
+    public static int pop() {
+        return stateStack.pop();
     }
 
-    public static int getTo(int state) {
-        return ((state >> 6) & 0x3F);
-    }
-
-    public static int getFlags(int state) {
-        return ((state >> 12) & 0xF);
-    }
-
-    public static int getCastling(int state) {
-        return ((state >> 16) & 0xF);
-    }
-
-    public static int getEP(int state) {
-        return ((state >> 20) & 0x1F);
-    }
-
-    public static int getHalfmoves(int state) {
-        return ((state >> 25) & 0x7F);
+    public static int getCaptured() {
+        return (stateStack.peek() & 0x1F);
     }
 }
