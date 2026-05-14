@@ -6,12 +6,10 @@
 
 package engine.model;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Queue;
+import java.util.Map;
 import engine.helper.FEN;
-import engine.helper.Pair;
 import engine.model.magics.MagicBitboard;
 
 public class Model {
@@ -55,7 +53,7 @@ public class Model {
         return lock;
     }
 
-    public static void setPosition(String fenStr, Queue<String> moves) {
+    public static void setPosition(String fenStr, List<String> moves) {
         FEN fenObj = new FEN(fenStr);
 
         Bitboard.setWithFEN(fenObj);
@@ -66,11 +64,10 @@ public class Model {
             List<Short> moveList = MoveGeneration.gen();
 
             for (Short move : moveList) {
-                if (Move.getAlgebraic(move).equals(moves.peek())) {
+                if (Move.getAlgebraic(move).equals(moves.getFirst())) {
                     Move.make(move);
-
                     if (moves.size() > 1) {
-                        moves.poll();
+                        moves.removeFirst();
                         break;
                     } else {
                         return;
@@ -80,36 +77,63 @@ public class Model {
         }
 
     }
-
-    public static Pair perft(int depth, boolean print) {
-        return perft(depth, true, print);
+    
+    public static Map<String, Long> getPerftMap(int depth, String fenStr, List<String> movesMade) {
+        Model.setPosition(fenStr, movesMade);
+        
+        Map<String, Long> map = new HashMap<>();
+        List<Short> movesGen = MoveGeneration.gen();
+        
+        for (short move : movesGen) {
+            Move.make(move);
+            
+            long nodes = perft(depth - 1, false);
+            
+            Move.unmake(move);
+            
+            map.put(Move.getAlgebraic(move), nodes);
+        }
+        
+        return map;
     }
 
-    public static Pair perft(int depth, boolean root, boolean print) {
+    public static long perft(int depth, boolean print) {
+        long start = System.nanoTime();
+        long nodes = perft(depth, true, print);
+        long taken = System.nanoTime() - start;
+
+        if (nodes > 0 && print) {
+            System.out.println("\nnodes: " + nodes);
+            System.out.println("time: " + taken / 1_000_000 + "ms");
+            System.out.println("nps: " + (int) (nodes / (++taken / 1_000_000_000.0)) + "\n");
+        }
+
+        return nodes;
+    }
+    
+    private static long perft(int depth, boolean root, boolean print) {
+        if(depth == 0) {
+            return 1;
+        }
+
+        long totalNodes = 0;
+        long branchNodes = 0;
         List<Short> moves = MoveGeneration.gen();
-        List<String> output = new ArrayList<>();
 
-        int nodes = 0;
         for (short move : moves) {
+            branchNodes = 0;
+            
             Move.make(move);
-
-            int branchNodes = depth <= 1 ? 1 : perft(depth - 1, false, print).getNodes();
-            nodes += branchNodes;
-
-            if (root) {
-                output.add(Move.getAlgebraic(move) + ": " + branchNodes);
-            }
-
+            branchNodes += perft(depth - 1, false, print);
             Move.unmake(move);
-        }
 
-        if (print) {
-            Collections.sort(output);
-            for (String s : output) {
-                System.out.println(s);
+            totalNodes += branchNodes;
+
+            if(root && print) {
+                System.out.println(Move.getAlgebraic(move) + ": " + branchNodes);
             }
         }
 
-        return new Pair(output, nodes);
+        return totalNodes;
     }
 }

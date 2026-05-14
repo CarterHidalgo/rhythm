@@ -8,14 +8,11 @@ import re
 import time
 import os
 
-teacher = "stockfish" # default is stockfish
-student = "rhythm" # default is rhythm
-test_size = "small" # options are "small" "medium" and "large"
 max_depth = 6 
 
 # Modify this function to customize the checker for your engine
 def customize(teacher, student):
-    if student.get_name() == "rhythm 2.0":
+    if student.get_name() == "rhythm":
         student.NODE_COUNT_REGEX = r"nodes: (\d+)"
 
 class ChessEngine:
@@ -77,6 +74,7 @@ class ChessEngine:
         for line in self.output:
             nodes_count = re.search(self.NODE_COUNT_REGEX, line)
             if nodes_count:
+                print(f"nodes_count: '{nodes_count}'")
                 return int(nodes_count.group(1)), time_taken
         raise Exception(
             "Unable to parse nodes count. Check if NODE_COUNT_REGEX is set properly."
@@ -155,9 +153,9 @@ base_path = os.getcwd().replace("\\", "/")
 #     print(f'WARNING: {test_size} is not a valid test suite size. Options are "small" "medium" and "large". Defaulting to "small"')
 #     epd_path = os.path.join(base_path, "app", "src", "test", "resources", "perftsuite_small.epd")
 
-teacher_path = os.path.join(base_path, "app", "src", "main", "resources", "stockfish.exe")
-student_path = os.path.join(base_path, "app", "build", "launch4j", "rhythm.exe")
-epd_path = os.path.join(base_path, "app", "src", "main", "resources", "perftsuite.epd")
+teacher_path = os.path.join(base_path, "stockfish.exe")
+student_path = os.path.join(base_path, "rhythm.exe") 
+epd_path = os.path.join(base_path, "src", "resources", "perftsuite.epd")
 
 # load engines
 teacher = ChessEngine(teacher_path)
@@ -192,7 +190,7 @@ for i in range(len(epd_list)):
         else:
             teacher_nodes, _ = teacher.get_perft(depth, fen)
 
-        student.get_perft(depth, fen)
+        # student.get_perft(depth, fen)
         student_nodes, student_time_taken = student.get_perft(depth, fen)
         total_student_time += student_time_taken
         print(f" Depth {depth} {student_nodes:15}", end="")

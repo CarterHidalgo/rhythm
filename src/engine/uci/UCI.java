@@ -41,7 +41,7 @@ public class UCI {
     private static final Pattern patternMate = Pattern.compile(".*mate (\\d+) .*");
     private static final Pattern patternMovetime = Pattern.compile(".*movetime (\\d+).*");
     private static final Pattern patternPerft = Pattern.compile("perft ([1-9]|[1-9]\\\\d).*");
-    private static final Pattern patternTeacher = Pattern.compile("teacher\\s+[\\w\\s\\\\./:-]+\\.exe");
+    // private static final Pattern patternTeacher = Pattern.compile("teacher\\s+[\\w\\s\\\\./:-]+\\.exe");
     private static final Pattern patternPosition =
             Pattern.compile("(?:fen (?<fen>.* \\d+ \\d+)|startpos)(?: moves (?<moves>.*))?");
 
@@ -65,6 +65,7 @@ public class UCI {
         commands.put("info", UCI::info);
         commands.put("autoperft", UCI::autoperft);
         commands.put("help", UCI::help);
+        commands.put("stop", UCI::stop);
         commands.put("quit", UCI::quit);
     }
 
@@ -163,15 +164,7 @@ public class UCI {
                 return;
             }
 
-            long start = System.nanoTime();
-            int nodes = Model.perft(goParameters.getPerft().get(), true).getNodes();
-            long taken = System.nanoTime() - start;
-
-            if (nodes > 0) {
-                out.println("\nnodes: " + nodes);
-                out.println("time: " + taken / 1_000_000 + "ms");
-                out.println("nps: " + (int) (nodes / (++taken / 1_000_000_000.0)) + "\n");
-            }
+            Model.perft(goParameters.getPerft().get(), true);
 
             return;
         } else {
@@ -179,7 +172,6 @@ public class UCI {
                 System.out.println("[TODO]: go find best move");
             }).start();
         }
-
     }
 
     private static void print(String param) {
@@ -198,21 +190,23 @@ public class UCI {
     }
 
     private static void autoperft(String param) {
-        if (param.equals("")) {
-            Autoperft.test("");
-        } else {
-            Matcher matcher = patternTeacher.matcher(param);
+        Autoperft.test(param);
 
-            if(matcher.matches()) {
-                Autoperft.test(param.substring(8, param.length()));
-            } else {
-                Autoperft.test(new FEN(param));
-            }
-        }
+        // Matcher matcher = patternTeacher.matcher(param);
+
+        // if(matcher.matches()) {
+        //     Autoperft.test(param.substring(8, param.length()));
+        // } else {
+        //     Autoperft.test(new FEN(param));
+        // }
     }
 
     private static void help(String ignore) {
         out.println("[TODO]: help");
+    }
+
+    private static void stop(String ignore) {
+        out.println("[TODO]: stop calculating as soon as possible");
     }
 
     private static void quit(String ignore) {

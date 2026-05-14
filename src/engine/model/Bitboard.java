@@ -32,27 +32,29 @@ public class Bitboard {
     public static long getOp() {
         return bitboards[GameInfo.getTurn() ? Enum.BLACK : Enum.WHITE];
     }
-
-    public static void set(int code, int index) {
-        bitboards[code] |= 1L << index;
+    
+    public static void set(int index, int... codes) {
+        for(int code : codes) {
+            bitboards[code] |= 1L << index;
+        }
+    }
+    
+    public static void clear(int index, int... codes) {
+        for(int code : codes) {
+            bitboards[code] &= ~(1L << index);
+        }
     }
 
-    public static void clear(int code, int index) {
-        bitboards[code] &= ~(1L << index);
-    }
-
-    public static void toggle(int code, long bitboard) {
-        bitboards[code] ^= bitboard;
+    public static void toggle(int index, int... codes) {
+        for(int code : codes) {
+            bitboards[code] ^= (1L << index);
+        }
     }
 
     public static void toggle(long bitboard, int... codes) {
         for(int code : codes) {
             bitboards[code] ^= bitboard;
         }
-    }
-
-    public static void set(int code, long value) {
-        bitboards[code] = value;
     }
 
     public static void setWithFEN(FEN fen) {
@@ -93,10 +95,6 @@ public class Bitboard {
         if (!fen.getEp().equals("-")) {
             System.out.println("Bitboard.java -> setWithFEN; setup ep bitboard by move");
         }
-    }
-
-    public static void clear(int code) {
-        bitboards[code] = 0L;
     }
 
     public static void clearAll() {

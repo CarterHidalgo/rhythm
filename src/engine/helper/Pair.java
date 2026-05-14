@@ -55,6 +55,6 @@ public class Pair implements Comparable<Pair> {
 
         Pair p = (Pair) o;
 
-        return this.move.equals(p.move) && nodes == p.getNodes();
+        return this.move.equals(p.move) && this.nodes == p.getNodes();
     }
 }

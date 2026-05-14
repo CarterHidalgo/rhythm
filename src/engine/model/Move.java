@@ -1,15 +1,16 @@
 /*
  * Author: Carter Hidalgo
  * 
- * Purpose: Contains move type flag bitcodes and methods for creating, making, unmaking, or printing
+ * Purpose: Contains move, flag bitcodes and methods for creating, making, unmaking, or printing
  * moves (shorts)
  */
 
 package engine.model;
 
+import java.util.Stack;
+
 import engine.helper.Bit;
 import engine.helper.Enum;
-import engine.helper.Printer;
 
 public class Move {
     /* 
@@ -49,80 +50,49 @@ public class Move {
     public static final byte ROOK_PROMO_CAPTURE = 0b0111;
     public static final byte QUEEN_PROMO_CAPTURE = 0b1111;
 
-    // position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves a2a4 b7b5 a4b5
-    // position fen rnbqkbnr/p1pppppp/8/1p6/P7/8/1PPPPPPP/RNBQKBNR w KQkq - 0 1 moves a4b5
+    private static Stack<GameState> stateStack = new Stack<>();
+
+    // position startpos moves a2a4 b7b5 a4b5
         
     public static void make(short move) {
-        int from = Move.getFrom(move);
-        int to = Move.getTo(move);
-        int piece = Board.get(from);
-        int target = Board.get(to);
-        int color = Piece.color(piece);
-        long fromBitboard = 1L << from;
-        long toBitboard = 1L << to;
-        long fromToBitboard = fromBitboard ^ toBitboard;
+        GameState state = new GameState(move);
+        stateStack.push(state);
 
-        // System.out.println("\nPreMake");
-        // Printer.board();
-        // Printer.bitboard(Enum.OCCUPIED);
-        // Printer.bitboard(Enum.EMPTY);
-        // Printer.bitboard(Enum.WHITE + Enum.PAWN);
-        // Printer.bitboard(Enum.BLACK + Enum.PAWN);
+        long fromToBitboard = (1L << state.getFrom()) ^ (1L << state.getTo());
+
+        Bitboard.toggle(fromToBitboard, state.getPiece(), Piece.color(state.getPiece()), Enum.OCCUPIED, Enum.EMPTY);
+        Board.set(state.getTo(), state.getPiece());
+        Board.set(state.getFrom(), Enum.EMPTY);
         
-        GameState.push(move);
-
-        if(isCapture(move)) {
-            Bitboard.clear(target, to);
-            Bitboard.clear(Enum.BLACK - color, to);
-            Bitboard.clear(Enum.OCCUPIED, to);
-            
-            Printer.bitboard("black");
-            Printer.bitboard("white");
-            System.exit(1);
+        if(Move.isCapture(move)) {
+            Bitboard.toggle(state.getTo(), state.getTarget(), Enum.BLACK - Piece.color(state.getPiece()), Enum.OCCUPIED, Enum.EMPTY);
         }
-        
-        Bitboard.toggle(fromToBitboard, piece, color, Enum.OCCUPIED);
-        Bitboard.set(Enum.EMPTY, ~Bitboard.get(Enum.OCCUPIED));
 
-        Board.set(to, piece);
-        Board.set(from, Enum.EMPTY);
+        if(Move.isPromotion(move)) {
+            Bitboard.toggle(state.getTo(), state.getPiece(), Piece.color(state.getPiece()) + Move.getFlags(move) - 10);
+            Board.set(state.getTo(), Piece.color(state.getPiece()) + Move.getFlags(move) - 10);
+        }
 
         GameInfo.makeMove();
-
-        // System.out.println("\nPostMake");
-        // Printer.board();
-        // Printer.bitboard(Enum.OCCUPIED);
-        // Printer.bitboard(Enum.EMPTY);
-        // Printer.bitboard(Enum.WHITE + Enum.PAWN);
-        // Printer.bitboard(Enum.BLACK + Enum.PAWN);
     }
 
     public static void unmake(short move) {
-        int from = Move.getFrom(move);
-        int to = Move.getTo(move);
-        int piece = Board.get(to);
-        int color = Piece.color(piece);
-        long fromBitboard = 1L << from;
-        long toBitboard = 1L << to;
-        long fromToBitboard = fromBitboard ^ toBitboard;
+        GameState state = stateStack.pop();
+        long fromToBitboard = (1L << state.getFrom()) ^ (1L << state.getTo());
 
-        Bitboard.toggle(piece, fromToBitboard);
-        Bitboard.toggle(color, fromToBitboard);
-        Bitboard.toggle(Enum.OCCUPIED, fromToBitboard);
-        Bitboard.toggle(Enum.EMPTY, fromToBitboard);
-
-        Board.set(from, piece);
-        Board.set(to, Enum.EMPTY);
+        Bitboard.toggle(fromToBitboard, state.getPiece(), Piece.color(state.getPiece()), Enum.OCCUPIED, Enum.EMPTY);
+        Board.set(state.getFrom(), state.getPiece());
+        Board.set(state.getTo(), state.getTarget());
+        
+        if(Move.isCapture(move)) {
+            Bitboard.toggle(state.getTo(), state.getTarget(), Enum.BLACK - Piece.color(state.getPiece()), Enum.OCCUPIED, Enum.EMPTY);
+        }
+        
+        if(Move.isPromotion(move)) {
+            Bitboard.clear(state.getTo(), Piece.color(state.getPiece()) + Move.getFlags(move) - 10, Piece.color(state.getPiece()));
+        }
 
         GameInfo.unmakeMove();
-
-        // System.out.println("\nend");
-        // Printer.board();
-        // Printer.bitboard(fromToBitboard, "fromToBitboard");
-        // System.out.println("piece: " + piece);
-        // System.out.println("color: " + color);
-        // Printer.bitboard("occupied");
-        // Printer.bitboard("empty");
     }
 
     public static short create(int from, int to, int flags) {
@@ -140,13 +110,17 @@ public class Move {
     public static int getFlags(short move) {
         return ((move >> 12) & 0xF);
     }
+    
+    public static boolean isCapture(short move) {
+        return ((move >> 13) & 1) == 1;
+    }
 
     public static boolean isPromotion(short move) {
         return ((move >> 12) & 1) == 1;
     }
 
-    public static boolean isCapture(short move) {
-        return ((move >> 13) & 1) == 1;
+    public static boolean isEP(short move) {
+        return false;
     }
 
     public static String getIndexed(short move) {

@@ -15,17 +15,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Pattern;
 import engine.model.Model;
 
-// autoperft teacher C:\Users\Carter Hidalgo\chess\engines\stockfish\stockfish-windows-x86-64-avx2.exe
 public class Autoperft {
+    private static final Path teacherPath = Paths.get("stockfish.exe");
     private static final Path perftsuitePath = Paths.get("src", "resources", "perftsuite.epd");
     private static List<String> tests = new ArrayList<>();
     private static Process process;
@@ -34,12 +32,11 @@ public class Autoperft {
     private static ConcurrentLinkedQueue<String> output = new ConcurrentLinkedQueue<>();
 
     private static final Pattern patternNodes = Pattern.compile("Nodes searched: \\d+");
-    private static final Pattern patternMoves =
-            Pattern.compile("[a-h][1-8][a-h][1-8][qrbn]?: (\\d+)");
+    private static final Pattern patternMoves = Pattern.compile("[a-h][1-8][a-h][1-8][qrbn]?: (\\d+)");
 
-    public static boolean test(String path) {
-        if (!path.isEmpty() && !openProcess(path)) {
-            System.out.println("Unable to open teacher executable at path \"" + path + "\"");
+    public static boolean test(String mode) {
+        if (!openProcess(teacherPath.toString())) {
+            System.out.println("Unable to open teacher executable at path \"" + teacherPath + "\"");
             return false;
         }
 
@@ -66,23 +63,21 @@ public class Autoperft {
             System.out.println(" FEN: " + parts[0]);
 
             for (int depth = 1; depth < parts.length; depth++) {
-                System.out.print(" Depth: " + depth + " ".repeat(15));
-
                 Model.setPosition(parts[0], null);
-                long studentNodes = Model.perft(depth, false).getNodes();
+                long studentNodes = Model.perft(depth, false);
                 long teacherNodes = Long.valueOf(parts[depth].split(" ")[1]);
-
+                
+                System.out.printf("%-10s%15d ", "Depth: " + depth, studentNodes);
+                
                 if (studentNodes == teacherNodes) {
                     Printer.green("PASS");
                     System.out.println();
                 } else {
                     Printer.red("FAIL");
-                    System.out.println(", expected " + teacherNodes + " but found " + studentNodes);
+                    System.out.println(", expected " + teacherNodes);
 
-                    if (!path.isEmpty()) {
-                        bisect(depth, parts[0]);
-                        closeProcess();
-                    }
+                    bisect(depth, parts[0], mode);
+                    closeProcess();
 
                     return false;
                 }
@@ -99,74 +94,87 @@ public class Autoperft {
         return false;
     }
 
-    private static void bisect(int depth, String fen) {
-        System.out.println("  Bisecting...");
+    private static void bisect(int depth, String fenStr, String mode) {
+        System.out.println("\nBisecting in " + (mode.equals("long") ? "long" : "normal") + " mode...");
+        bisect(depth, depth, fenStr, mode, new ArrayList<String>());
+    }
 
-        Queue<String> moves = new LinkedList<>();
+    private static void bisect(int depth, int totalDepth, String fenStr, String mode, List<String> moves) {
+        for(int d = depth; d > 0; d--) {
+            Map<String, Long> teacherPerftMap = getTeacherPerftMap(d, fenStr, new ArrayList<String>(moves));
+            Map<String, Long> studentPerftMap = Model.getPerftMap(d, fenStr, new ArrayList<String>(moves));
 
-        for (int d = depth; d > 0; d--) {
-            Map<String, Integer> teacherMoves = parseDivide(getTeacherPerft(d, fen, moves));
-            Map<String, Integer> studentMoves = parseDivide(getStudentPerft(d, fen, moves));
+            int count = 0;
+            for (String key : studentPerftMap.keySet()) {
+                if (!teacherPerftMap.containsKey(key)) {
+                    if(count < 10) {
+                        Printer.green("  ".repeat(moves.size()) + "  - " + key + " extra" + ((count < 9) ? "\n" : ""));
+                    }
 
-            System.out.println(teacherMoves);
-            System.out.println(studentMoves);
+                    count++;
+                }
+            }
+
+            if(count > 10) {
+                System.out.println(" ... and " + (count - 10) + " more");
+            }
 
             int minDiff = Integer.MAX_VALUE;
             int faultyMoves = 0;
-            String move = null;
-
-            for (String key : teacherMoves.keySet()) {
-                if (!studentMoves.containsKey(key)) {
-                    Printer.red("  - " + key + " missing\n");
-                }
-
-                int diff = Math.abs(teacherMoves.get(key) - studentMoves.get(key));
-                if (diff > 0) {
+            String move = "";
+            
+            for (String key : teacherPerftMap.keySet()) {
+                int diff = Math.abs(studentPerftMap.get(key).intValue() - teacherPerftMap.get(key).intValue());
+                if (studentPerftMap.containsKey(key) && diff != 0) {
                     faultyMoves++;
-                    if(diff < minDiff) {
+
+                    if(mode.equals("long")) {
+                        moves.add(key);
+                        
+                        System.out.print("  ".repeat(moves.size()) + (totalDepth - depth + 1) + ". " + key + " (");
+                        Printer.red(String.valueOf(studentPerftMap.get(key)));
+                        System.out.print(" != ");
+                        Printer.green(String.valueOf(teacherPerftMap.get(key)));
+                        System.out.println(")");
+                        
+                        bisect(d - 1, totalDepth, fenStr, mode, moves);
+                        
+                        moves.removeLast();
+                    } else if(diff < minDiff) {
                         minDiff = diff;
-                        move = new String(key);
+                        move = key;
                     }
                 }
-            }
+                
+                count = 0;
+                if (!studentPerftMap.containsKey(key)) {
+                    if(count < 10) {
+                        Printer.red("  ".repeat(moves.size()) + "  - " + key + " missing" + ((count < 9) ? "\n" : ""));
+                    }
 
-            for (String key : studentMoves.keySet()) {
-                if (!teacherMoves.containsKey(key)) {
-                    Printer.green("  - " + key + " extra\n");
+                    count++;
+                }
+
+                if (count > 10) {
+                    System.out.println(" ... and " + (count - 10) + " more");
                 }
             }
 
-            if (move != null) {
+            if(!move.isEmpty()) {
                 moves.add(move);
-                System.out.println("  ".repeat(moves.size()) + move + " (" + studentMoves.get(move)
-                        + " != " + teacherMoves.get(move) + ") out of " + faultyMoves + " faulty");
+
+                System.out.print("  ".repeat(moves.size()) + (totalDepth - d + 1) + ". " + move + " (");
+                Printer.red(String.valueOf(studentPerftMap.get(move)));
+                System.out.print(" != ");
+                Printer.green(String.valueOf(teacherPerftMap.get(move)));
+                System.out.println(") out of " + faultyMoves + " faulty");
             }
         }
-
-        System.out.println("  lichess: https://lichess.org/analysis/" + fen.replace(" ", "_") + " "
-                + String.join(" ", moves));
     }
 
-    private static Map<String, Integer> parseDivide(List<String> moves) {
-        Map<String, Integer> map = new HashMap<>();
-        
-        for(String move : moves) {
-            String[] parts = move.split(": ");
-
-            map.put(parts[0], Integer.valueOf(parts[1]));
-        }
-
-        return map;
-    }
-
-    private static List<String> getStudentPerft(int depth, String fenStr, Queue<String> moves) {
-        Model.setPosition(fenStr, moves);
-        return Model.perft(depth, false).getMoves();
-    }
-
-    private static List<String> getTeacherPerft(int depth, String fenStr, Queue<String> moves) {
+    private static Map<String, Long> getTeacherPerftMap(int depth, String fenStr, List<String> moves) {
         StringBuilder cmd = new StringBuilder();
-        List<String> perft = new ArrayList<>();
+        Map<String, Long> map = new HashMap<>();
 
         if (fenStr.isBlank()) {
             cmd.append("position startpos");
@@ -174,7 +182,7 @@ public class Autoperft {
             cmd.append("position fen " + fenStr);
         }
 
-        if (moves.size() > 0) {
+        if (moves != null && moves.size() > 0) {
             cmd.append(" moves " + String.join(" ", moves));
         }
 
@@ -183,11 +191,12 @@ public class Autoperft {
         sendCommand(cmd.toString());
         for (String line : waitForMatch(patternNodes, 5000)) {
             if (patternMoves.matcher(line).matches()) {
-                perft.add(line);
+                String[] parts = line.split(": ");
+                map.put(parts[0], Long.valueOf(parts[1]));
             }
         }
 
-        return perft;
+        return map;
     }
 
     private static List<String> waitForMatch(Pattern regex, int timeout) {
@@ -236,7 +245,6 @@ public class Autoperft {
         return result;
     }
 
-
     private static void sendCommand(String cmd) {
         try {
             writer.write(cmd + "\n");
@@ -248,14 +256,11 @@ public class Autoperft {
 
     private static boolean openProcess(String path) {
         try {
-            ProcessBuilder processBuilder =
-                    new ProcessBuilder(path.toString()).redirectErrorStream(true);
+            ProcessBuilder processBuilder = new ProcessBuilder(path.toString()).redirectErrorStream(true);
             process = processBuilder.start();
             writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
             reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         } catch (IOException e) {
-            System.out.println("Unable to open teacher executable at \"" + path + "\"");
-
             return false;
         }
 
