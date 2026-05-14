@@ -10,10 +10,10 @@ package engine.model;
 import engine.helper.FEN;
 
 public class GameInfo {
-    private static int halfmoves = 0; // how many moves both players have made since the last pawn advance or piece capture
-    private static int fullmoves = 0; // the number of completed turns in the game - incremented by one every time Black moves
-    private static boolean turn = true; // indicates whose turn it is to play - true for White false for Black
-    private static boolean side = true; // indicates which color the engine is playing as - true for White false for Black
+    private static int halfmoves = 0;
+    private static int fullmoves = 0; 
+    private static boolean turn = true;
+    private static boolean side = true; 
     private static int castling = 0xF;
 
     public static int getHalfmoves() {
@@ -73,6 +73,10 @@ public class GameInfo {
         turn = fen.getTurn().equals("w") ? true : false;
     }
 
+    /**
+     * Increments <code>halfmove</code>, <code>fullmove</code>, and toggles
+     * <code>turn</code>
+     */
     public static void makeMove() {
         halfmoves++;
         if (!turn) {
@@ -81,6 +85,10 @@ public class GameInfo {
         turn = !turn;
     }
 
+    /**
+     * Decrements <code>halfmove</code>, <code>fullmove</code>, and toggles
+     * <code>turn</code>
+     */
     public static void unmakeMove() {
         halfmoves--;
         if (turn) {

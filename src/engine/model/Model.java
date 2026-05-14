@@ -6,11 +6,11 @@
 
 package engine.model;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import engine.helper.FEN;
 import engine.model.magics.MagicBitboard;
-
-import java.util.ArrayList;
-import java.util.Collections;
 
 public class Model {
     private static volatile boolean isRunning = true;
@@ -29,9 +29,9 @@ public class Model {
 
     public static void setReady(boolean isReady) {
         Model.isReady = isReady;
-        
-        synchronized(lock) {
-            if(isReady) {
+
+        synchronized (lock) {
+            if (isReady) {
                 lock.notifyAll();
             }
         }
@@ -53,47 +53,87 @@ public class Model {
         return lock;
     }
 
-    public static void setPosition(String fenStr) {
+    public static void setPosition(String fenStr, List<String> moves) {
         FEN fenObj = new FEN(fenStr);
 
         Bitboard.setWithFEN(fenObj);
         Board.setWithFEN(fenObj);
         GameInfo.setWithFEN(fenObj);
-    }
 
-    public static int perft(int depth, boolean print) {
-        return perft(depth, true, print);
-    }
+        while (moves != null && !moves.isEmpty()) {
+            List<Short> moveList = MoveGeneration.gen();
 
-    public static int perft(int depth, boolean root, boolean print) {
-        ArrayList<Short> moves = MoveGeneration.gen();
-        ArrayList<String> output = new ArrayList<>();
-
-        int nodes = 0;
-        for(short move : moves) {
-            if(true) {
-                int state = GameState.create(move);
-
-                Move.make(move, depth);
-
-                int branchNodes = depth <= 1 ? 1 : perft(depth - 1, false, print);
-                nodes += branchNodes;
-                
-                if(root) {
-                    output.add(Move.getAlgebraic(move) + ": " + branchNodes);
+            for (Short move : moveList) {
+                if (Move.getAlgebraic(move).equals(moves.getFirst())) {
+                    Move.make(move);
+                    if (moves.size() > 1) {
+                        moves.removeFirst();
+                        break;
+                    } else {
+                        return;
+                    }
                 }
-
-                Move.unmake(move, state);
             }
         }
 
-        if(print) {
-            Collections.sort(output);
-            for(String s : output) {
-                System.out.println(s);
-            }
+    }
+    
+    public static Map<String, Long> getPerftMap(int depth, String fenStr, List<String> movesMade) {
+        Model.setPosition(fenStr, movesMade);
+        
+        Map<String, Long> map = new HashMap<>();
+        List<Short> movesGen = MoveGeneration.gen();
+        
+        for (short move : movesGen) {
+            Move.make(move);
+            
+            long nodes = perft(depth - 1, false);
+            
+            Move.unmake(move);
+            
+            map.put(Move.getAlgebraic(move), nodes);
+        }
+        
+        return map;
+    }
+
+    public static long perft(int depth, boolean print) {
+        long start = System.nanoTime();
+        long nodes = perft(depth, true, print);
+        long taken = System.nanoTime() - start;
+
+        if (nodes > 0 && print) {
+            System.out.println("\nnodes: " + nodes);
+            System.out.println("time: " + taken / 1_000_000 + "ms");
+            System.out.println("nps: " + (int) (nodes / (++taken / 1_000_000_000.0)) + "\n");
         }
 
         return nodes;
+    }
+    
+    private static long perft(int depth, boolean root, boolean print) {
+        if(depth == 0) {
+            return 1;
+        }
+
+        long totalNodes = 0;
+        long branchNodes = 0;
+        List<Short> moves = MoveGeneration.gen();
+
+        for (short move : moves) {
+            branchNodes = 0;
+            
+            Move.make(move);
+            branchNodes += perft(depth - 1, false, print);
+            Move.unmake(move);
+
+            totalNodes += branchNodes;
+
+            if(root && print) {
+                System.out.println(Move.getAlgebraic(move) + ": " + branchNodes);
+            }
+        }
+
+        return totalNodes;
     }
 }

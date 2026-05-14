@@ -34,7 +34,7 @@ public class Printer {
                 code = Board.get(index);
 
                 if((Bitboard.get(Board.get(index)) & (1L << index)) == 0) {
-                    System.out.println("index: " + index);
+                    System.out.println("\nindex: " + index);
                     System.out.println("Board.get(" + index + "): " + Board.get(index));
                     System.out.println("Bitboard.get(" + Board.get(index) + "): " + Bitboard.get(Board.get(index)));
                     System.out.println("Bitboard.get(" + Board.get(index) + ") & (1L << " + index + "): " + (Bitboard.get(Board.get(index)) & (1L << index)));
@@ -49,6 +49,7 @@ public class Printer {
                             } else {
                                 expected += "/" + Enum.codeToString(k);
                             }
+                            Printer.bitboard(k);
                         }
                     }
 
@@ -56,7 +57,6 @@ public class Printer {
                         "Expected \"" + expected + "\" in Board, but found \"" + Board.getString(index) + "\" instead.");
 
                     System.exit(1);
-                    return;
                 } else if(Piece.isWhite(code)) {
                     blue(Board.getString(index));
                 } else if(Piece.isBlack(code)) {
@@ -108,6 +108,12 @@ public class Printer {
             } else {
                 System.out.println("Unknown bitboard \"" + param + "\". Type \"print help\" for more.");
             }
+        }
+    }
+
+    public static void bitboard(int... codes) {
+        for(int code : codes) {
+            bitboard(Enum.codeToString(code));
         }
     }
 

@@ -1,7 +1,7 @@
 /*
  * Author: Carter Hidalgo
  * 
- * Purpose: Provides enums for pieces/bitboards and methods for converting from char/String to int
+ * Purpose: Provides "enums" for pieces/bitboards and methods for converting from char/String to int
  * values
  */
 

@@ -9,17 +9,16 @@ package engine.uci;
 
 import java.io.PrintStream;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.Scanner;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Scanner;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.Optional;
 import java.util.stream.Collectors;
-
 import engine.helper.Autoperft;
 import engine.helper.FEN;
 import engine.helper.Printer;
@@ -42,14 +41,15 @@ public class UCI {
     private static final Pattern patternMate = Pattern.compile(".*mate (\\d+) .*");
     private static final Pattern patternMovetime = Pattern.compile(".*movetime (\\d+).*");
     private static final Pattern patternPerft = Pattern.compile("perft ([1-9]|[1-9]\\\\d).*");
-    private static final Pattern positionPattern =
+    // private static final Pattern patternTeacher = Pattern.compile("teacher\\s+[\\w\\s\\\\./:-]+\\.exe");
+    private static final Pattern patternPosition =
             Pattern.compile("(?:fen (?<fen>.* \\d+ \\d+)|startpos)(?: moves (?<moves>.*))?");
 
     private static final Pattern[] goNumeralPatterns = new Pattern[] {patternWhiteTime,
             patternWhiteTimeIncr, patternBlackTime, patternBlackTimeIncr, patternMovesToGo,
             patternDepth, patternNodes, patternMate, patternMovetime, patternPerft};
 
-    private static final String name = "Rhythm";
+    private static final String name = "rhythm";
     private static final String author = "Carter Hidalgo";
 
     private static Thread uciThread;
@@ -65,6 +65,7 @@ public class UCI {
         commands.put("info", UCI::info);
         commands.put("autoperft", UCI::autoperft);
         commands.put("help", UCI::help);
+        commands.put("stop", UCI::stop);
         commands.put("quit", UCI::quit);
     }
 
@@ -82,7 +83,7 @@ public class UCI {
 
             if (commands.containsKey(command)) {
                 commands.get(command).accept(params);
-            } else {
+            } else if(!command.isBlank()) {
                 out.println("Unknown command \"" + command + "\". Type help for more information.");
             }
         }
@@ -122,22 +123,22 @@ public class UCI {
         out.println("readyok");
     }
 
-    private static void position(String position) {
-        String[] moves;
-        String startingPosition = FEN.START_FEN;
-        Matcher matcher = positionPattern.matcher(position);
+    private static void position(String params) {
+        String[] moves = null;
+        String fenStr = FEN.START_FEN;
+        Matcher matcher = patternPosition.matcher(params);
 
         if (matcher.matches()) {
             if (matcher.group("fen") != null) {
-                startingPosition = matcher.group("fen");
+                fenStr = matcher.group("fen");
             }
 
             if (matcher.group("moves") != null) {
                 moves = matcher.group("moves").split(" ");
             }
-        }
 
-        System.out.println("[TODO]: set position with moves");
+            Model.setPosition(fenStr, moves != null ? Arrays.stream(moves).collect(Collectors.toCollection(LinkedList::new)) : null);
+        }
     }
 
     private static void go(String params) {
@@ -163,15 +164,7 @@ public class UCI {
                 return;
             }
 
-            long start = System.nanoTime();
-            int nodes = Model.perft(goParameters.getPerft().get(), true);
-            long taken = System.nanoTime() - start;
-
-            if (nodes > 0) {
-                out.println("\nnodes: " + nodes);
-                out.println("time: " + taken / 1_000_000 + "ms");
-                out.println("nps: " + (int) (nodes / (++taken / 1_000_000_000.0)) + "\n");
-            }
+            Model.perft(goParameters.getPerft().get(), true);
 
             return;
         } else {
@@ -179,7 +172,6 @@ public class UCI {
                 System.out.println("[TODO]: go find best move");
             }).start();
         }
-
     }
 
     private static void print(String param) {
@@ -198,16 +190,23 @@ public class UCI {
     }
 
     private static void autoperft(String param) {
-        if (param.equals("")) {
-            Autoperft.test();
-        } else {
-            FEN fen = new FEN(param);
-            Autoperft.test(fen);
-        }
+        Autoperft.test(param);
+
+        // Matcher matcher = patternTeacher.matcher(param);
+
+        // if(matcher.matches()) {
+        //     Autoperft.test(param.substring(8, param.length()));
+        // } else {
+        //     Autoperft.test(new FEN(param));
+        // }
     }
 
     private static void help(String ignore) {
         out.println("[TODO]: help");
+    }
+
+    private static void stop(String ignore) {
+        out.println("[TODO]: stop calculating as soon as possible");
     }
 
     private static void quit(String ignore) {

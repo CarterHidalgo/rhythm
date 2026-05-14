@@ -1,6 +1,6 @@
 # Rhythm Chess Engine
 
-WIP UCI-complient Java chess engine. (A re-working using the core of my prior Java/JavaFX chess engine.)  
+A WIP UCI-complient NNUE Java chess engine.
 
 ## Components
 
