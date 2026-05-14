@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 import engine.model.Model;
 
 public class Autoperft {
-    private static final Path teacherPath = Paths.get("stockfish.exe");
+    private static final Path teacherPath = Paths.get("src", "resources", "stockfish.exe");
     private static final Path perftsuitePath = Paths.get("src", "resources", "perftsuite.epd");
     private static List<String> tests = new ArrayList<>();
     private static Process process;

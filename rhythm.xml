@@ -2,8 +2,8 @@
 <launch4jConfig>
   <dontWrapJar>false</dontWrapJar>
   <headerType>console</headerType>
-  <jar>C:\Users\carte\Chess\Engines\rhythm\rhythm.jar</jar>
-  <outfile>C:\Users\carte\Chess\Engines\rhythm\rhythm.exe</outfile>
+  <jar>C:\Users\carte\Chess\Engines\rhythm\dist\rhythm.jar</jar>
+  <outfile>C:\Users\carte\Chess\Engines\rhythm\dist\rhythm.exe</outfile>
   <errTitle>You must have the latest version of Java</errTitle>
   <cmdLine></cmdLine>
   <chdir>.</chdir>
@@ -26,6 +26,6 @@
     <jreNotFoundErr>This application requires a Java Runtime Environment.</jreNotFoundErr>
     <jreVersionErr>This application requires a Java Runtime Environment</jreVersionErr>
     <launcherErr>The registry refers to a nonexistent Java Runtime Environment installation or the runtime is corrupted.</launcherErr>
-    <instanceAlreadyExistsMsg></instanceAlreadyExistsMsg>
+    <instanceAlreadyExistsMsg>An application instance is already running.</instanceAlreadyExistsMsg>
   </messages>
 </launch4jConfig>

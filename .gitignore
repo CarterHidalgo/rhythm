@@ -14,11 +14,13 @@ Thumbs.db
 # Log files
 *.log
 
-# Binary output directory
+# Ignored directories
 bin/
+dist/
 
 # Other unnecessary archive files
 *.zip
 *.tar
 *.gz
 *.exe
+*.xml
