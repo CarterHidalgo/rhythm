@@ -6,6 +6,9 @@
 
 package engine.helper;
 
+import engine.model.Board;
+import engine.model.GameInfo;
+
 public class FEN {
     public static final String[] COMMON_FENS = {
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", // [0] starting position
@@ -61,31 +64,69 @@ public class FEN {
         }
     }
 
-    public String getFEN() {
+    public static final FEN create() {
+        StringBuilder fen = new StringBuilder();
+
+        int index = 0;
+        int space = 0;
+        for(int i = 0; i < 8; i++) {
+            for(int j = 0; j < 8; j++) {
+                index = (7-i) * 8 + j;
+                char c = Enum.codeToString(Board.get(index)).charAt(0);
+                
+                if(c == 'e') {
+                    if(Character.isDigit(fen.charAt(fen.length() - 1))) {
+                        fen.replace(fen.length() - 1, fen.length(), String.valueOf(++space));
+                    } else {
+                        fen.append(String.valueOf(++space));
+                    }
+                } else {
+                    fen.append(c);
+                    space = 0;
+                }
+            }
+
+            space = 0;
+            fen.append("/");
+        }
+
+        fen.deleteCharAt(fen.length() - 1);
+        fen.append(" " + GameInfo.getTurnString().charAt(0) + " " + GameInfo.getCastlingString() + " " + GameInfo.getEPString() + " " + GameInfo.getHalfmoves() + " " + GameInfo.getFullmoves());
+
+        return new FEN(fen.toString());
+    }
+
+    public final String getFEN() {
         return fen.toString();
     }
 
-    public String getTurn() {
+    public final String getTurn() {
         return turn.toString();
     }
 
-    public String getCastling() {
+    public final String getCastling() {
         return castling.toString();
     }
 
-    public String getEp() {
+    public final String getEp() {
         return ep.toString();
     }
 
-    public int getHalfmoves() {
+    public final int getHalfmoves() {
         return halfmoves;
     }
 
-    public int getFullmoves() {
+    public final int getFullmoves() {
         return fullmoves;
     }
 
-    public String get() {
+    public final String get() {
+        return fen.toString() + " " + turn.toString() + " " + castling.toString() + " " + ep.toString() + " "
+                + halfmoves + " " + fullmoves;
+    }
+
+    @Override
+    public final String toString() {
         return fen.toString() + " " + turn.toString() + " " + castling.toString() + " " + ep.toString() + " "
                 + halfmoves + " " + fullmoves;
     }

@@ -26,7 +26,7 @@ public class Enum {
     public static final int OCCUPIED = 19;
     public static final int EP = 20;
 
-    public static int stringToCode(String piece) {
+    public static final int stringToCode(String piece) {
         switch (piece) {
             case "white":
                 return WHITE;
@@ -79,7 +79,7 @@ public class Enum {
         }
     }
 
-    public static String codeToString(int code) {
+    public static final String codeToString(int code) {
         switch (code) {
             case WHITE:
                 return "white";
@@ -123,5 +123,16 @@ public class Enum {
                 System.out.println("Unknown code: " + code);
                 return ".";
         }
+    }
+
+    public static final String indexToString(int index) {
+        if (index < 0 || index > 63) {
+            throw new IllegalArgumentException("Index must be between 0 and 63");
+        }
+
+        char file = (char) ('a' + (index % 8));
+        int rank = (index / 8) + 1;
+
+        return "" + file + rank;
     }
 }

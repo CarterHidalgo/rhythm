@@ -51,10 +51,8 @@ public class Move {
     public static final byte QUEEN_PROMO_CAPTURE = 0b1111;
 
     private static Stack<GameState> stateStack = new Stack<>();
-
-    // position startpos moves a2a4 b7b5 a4b5
         
-    public static void make(short move) {
+    public static final void make(short move) {
         GameState state = new GameState(move);
         stateStack.push(state);
 
@@ -73,10 +71,10 @@ public class Move {
             Board.set(state.getTo(), Piece.color(state.getPiece()) + Move.getFlags(move) - 10);
         }
 
-        GameInfo.makeMove();
+        GameInfo.makeMove(state);
     }
 
-    public static void unmake(short move) {
+    public static final void unmake(short move) {
         GameState state = stateStack.pop();
         long fromToBitboard = (1L << state.getFrom()) ^ (1L << state.getTo());
 
@@ -92,38 +90,38 @@ public class Move {
             Bitboard.clear(state.getTo(), Piece.color(state.getPiece()) + Move.getFlags(move) - 10, Piece.color(state.getPiece()));
         }
 
-        GameInfo.unmakeMove();
+        GameInfo.unmakeMove(state);
     }
 
-    public static short create(int from, int to, int flags) {
+    public static final short create(int from, int to, int flags) {
         return (short) ((from & 0x3F) | ((to & 0x3F) << 6) | ((flags & 0xF) << 12));
     }
 
-    public static int getTo(short move) {
+    public static final int getTo(short move) {
         return ((move >> 6) & 0x3F);
     }
 
-    public static int getFrom(short move) {
+    public static final int getFrom(short move) {
         return ((move & 0x3F));
     }
 
-    public static int getFlags(short move) {
+    public static final int getFlags(short move) {
         return ((move >> 12) & 0xF);
     }
     
-    public static boolean isCapture(short move) {
+    public static final boolean isCapture(short move) {
         return ((move >> 13) & 1) == 1;
     }
 
-    public static boolean isPromotion(short move) {
+    public static final boolean isPromotion(short move) {
         return ((move >> 12) & 1) == 1;
     }
 
-    public static boolean isEP(short move) {
+    public static final boolean isEP(short move) {
         return false;
     }
 
-    public static String getIndexed(short move) {
+    public static final String getIndexed(short move) {
         byte fromIndex = (byte) (move & 0b111111);
         byte toIndex = (byte) ((move >> 6) & 0b111111);
         byte flags = (byte) ((move >> 12) & 0b1111);
@@ -131,7 +129,7 @@ public class Move {
         return fromIndex + " | " + toIndex + " | " + flags;
     }
 
-    public static String getAlgebraic(short move) {
+    public static final String getAlgebraic(short move) {
         byte fromIndex = (byte) (move & 0b111111);
         byte toIndex = (byte) ((move >> 6) & 0b111111);
         byte flags = (byte) ((move >> 12) & 0b1111);
@@ -139,13 +137,13 @@ public class Move {
         return indexToAlgebraic(fromIndex) + indexToAlgebraic(toIndex) + flagsToAlgebraic(flags);
     }
 
-    private static String indexToAlgebraic(byte index) {
+    private static final String indexToAlgebraic(byte index) {
         char file = (char) ('a' + (index % 8));
         int rank = 1 + (index / 8);
         return "" + file + rank;
     }
 
-    private static String flagsToAlgebraic(byte flags) {
+    private static final String flagsToAlgebraic(byte flags) {
         if (Bit.isSet(flags, 3)) {
             switch (flags) {
                 case KNIGHT_PROMO:

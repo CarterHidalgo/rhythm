@@ -11,53 +11,58 @@ import engine.helper.Enum;
 import engine.helper.FEN;
 
 public class Bitboard {
-    private static long[] bitboards = new long[21];
+    public static final long FILE_A = 0x101010101010101L;
+    public static final long FILE_H = 0x8080808080808080L;
+    public static final long RANK_3 = 0xff0000L;
+    public static final long RANK_6 = 0xff0000000000L;
 
-    public static long get(int code) {
+    private static long[] bitboards = new long[Enum.LENGTH];
+
+    public static final long get(int code) {
         return bitboards[code];
     }
 
-    public static long getSelf(int code) {
-        return bitboards[(GameInfo.getTurn() ? Enum.WHITE : Enum.BLACK) + code];
+    public static final long getSelf(int code) {
+        return bitboards[GameInfo.getTurn() + code];
     }
 
-    public static long getSelf() {
-        return bitboards[GameInfo.getTurn() ? Enum.WHITE : Enum.BLACK];
+    public static final long getSelf() {
+        return bitboards[GameInfo.getTurn()];
     }
 
-    public static long getOp(int code) {
-        return bitboards[(GameInfo.getTurn() ? Enum.BLACK : Enum.WHITE) + code];
+    public static final long getOp(int code) {
+        return bitboards[GameInfo.getTurn() + code];
     }
 
-    public static long getOp() {
-        return bitboards[GameInfo.getTurn() ? Enum.BLACK : Enum.WHITE];
+    public static final long getOp() {
+        return bitboards[Enum.BLACK - GameInfo.getTurn()];
     }
     
-    public static void set(int index, int... codes) {
+    public static final void set(int index, int... codes) {
         for(int code : codes) {
             bitboards[code] |= 1L << index;
         }
     }
     
-    public static void clear(int index, int... codes) {
+    public static final void clear(int index, int... codes) {
         for(int code : codes) {
             bitboards[code] &= ~(1L << index);
         }
     }
 
-    public static void toggle(int index, int... codes) {
+    public static final void toggle(int index, int... codes) {
         for(int code : codes) {
             bitboards[code] ^= (1L << index);
         }
     }
 
-    public static void toggle(long bitboard, int... codes) {
+    public static final void toggle(long bitboard, int... codes) {
         for(int code : codes) {
             bitboards[code] ^= bitboard;
         }
     }
 
-    public static void setWithFEN(FEN fen) {
+    public static final void setWithFEN(FEN fen) {
         int rank = 7;
         int file = 0;
 
@@ -97,7 +102,7 @@ public class Bitboard {
         }
     }
 
-    public static void clearAll() {
+    public static final void clearAll() {
         for (int i = 0; i < bitboards.length; i++) {
             bitboards[i] = 0L;
         }

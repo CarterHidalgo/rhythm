@@ -11,7 +11,7 @@ import engine.model.Model;
 import engine.uci.UCI;
 
 public class App {
-    public static void main(String[] args) {
+    public static final void main(String[] args) {
         Printer.white("");
         UCI.start();
         Model.init();

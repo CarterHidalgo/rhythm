@@ -17,7 +17,7 @@ public class Printer {
     private static final String PURPLE = "\u001B[35m";
     private static final String GREEN = "\u001B[32m";
 
-    public static void board() {
+    public static final void board() {
         int index = 0;
         int code = 0;
 
@@ -71,7 +71,7 @@ public class Printer {
         System.out.println("\n   a b c d e f g h\n");
     }
 
-    public static void bitboard(String paramString) {
+    public static final void bitboard(String paramString) {
         String[] params = paramString.split(" ");
 
         for(String param : params) {
@@ -111,13 +111,13 @@ public class Printer {
         }
     }
 
-    public static void bitboard(int... codes) {
+    public static final void bitboard(int... codes) {
         for(int code : codes) {
             bitboard(Enum.codeToString(code));
         }
     }
 
-    public static void bitboard(long bitboard, String label) {
+    public static final void bitboard(long bitboard, String label) {
         System.out.println("\n>> " + label);
 
         for(int i = 7; i >= 0; i--) {
@@ -138,23 +138,31 @@ public class Printer {
         System.out.println();
     }
 
-    public static void white(String str) {
+    public static final void white(String str) {
         System.out.print(WHITE + str + WHITE);
     }
 
-    public static void red(String str) {
+    public static final void red(String str) {
         System.out.print(RED + str + WHITE);
     }
 
-    public static void blue(String str) {
+    public static final void red(long num) {
+        System.out.print(RED + num + WHITE);
+    }
+
+    public static final void blue(String str) {
         System.out.print(BLUE + str + WHITE);
     }
 
-    public static void purple(String str) {
+    public static final void purple(String str) {
         System.out.print(PURPLE + str + WHITE);
     }
 
-    public static void green(String str) {
+    public static final void green(String str) {
         System.out.print(GREEN + str + WHITE);
+    }
+
+    public static final void green(long num) {
+        System.out.print(GREEN + num + WHITE);
     }
 }

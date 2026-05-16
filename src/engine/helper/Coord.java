@@ -27,35 +27,35 @@ public class Coord {
         file = index % 8;
     }
 
-    public int getIndex() {
+    public final int getIndex() {
         return 8 * rank + file;
     }
 
-    public int getRank() {
+    public final int getRank() {
         return rank;
     }
 
-    public int getFile() {
+    public final int getFile() {
         return file;
     }
 
-    public boolean isValid() {
+    public final boolean isValid() {
         return rank >= 0 && rank < 8 && file >= 0 && file < 8;
     }
 
-    public boolean isNotEdge() {
+    public final boolean isNotEdge() {
         return rank > 0 && rank < 7 && file > 0 && file < 7;
     }
 
-    public Coord add(Coord addend) {
+    public final Coord add(Coord addend) {
         return new Coord(rank + addend.getRank(), file + addend.getFile());
     }
 
-    public Coord mul(int magnitude) {
+    public final Coord mul(int magnitude) {
         return new Coord(rank * magnitude, file * magnitude);
     }
 
-    public String toString() {
+    public final String toString() {
         return "rank: " + this.rank + "\nfile: " + this.file;
     }
 }

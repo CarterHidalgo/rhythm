@@ -1,5 +1,5 @@
 /*
- * Author: FrequentlyMissedDeadlines (https://github.com/FrequentlyMissedDeadlines/Chess-UCI)
+ * Author: Adapted from FrequentlyMissedDeadlines (https://github.com/FrequentlyMissedDeadlines/Chess-UCI)
  * 
  * Purpose: Starts and manages UCI threads, inputs, and outputs; interacts with the model via
  * UciListener listener
@@ -8,10 +8,9 @@
 package engine.uci;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Scanner;
@@ -41,6 +40,7 @@ public class UCI {
     private static final Pattern patternMate = Pattern.compile(".*mate (\\d+) .*");
     private static final Pattern patternMovetime = Pattern.compile(".*movetime (\\d+).*");
     private static final Pattern patternPerft = Pattern.compile("perft ([1-9]|[1-9]\\\\d).*");
+    private static final Pattern patternBisect = Pattern.compile("^[1-9]\\d*(?: long)?$");
     // private static final Pattern patternTeacher = Pattern.compile("teacher\\s+[\\w\\s\\\\./:-]+\\.exe");
     private static final Pattern patternPosition =
             Pattern.compile("(?:fen (?<fen>.* \\d+ \\d+)|startpos)(?: moves (?<moves>.*))?");
@@ -64,17 +64,18 @@ public class UCI {
         commands.put("print", UCI::print);
         commands.put("info", UCI::info);
         commands.put("autoperft", UCI::autoperft);
+        commands.put("bisect", UCI::bisect);
         commands.put("help", UCI::help);
         commands.put("stop", UCI::stop);
         commands.put("quit", UCI::quit);
     }
 
-    public static void start() {
+    public static final void start() {
         uciThread = new Thread(UCI::run);
         uciThread.start();
     }
 
-    private static void run() {
+    private static final void run() {
         while (Model.isRunning()) {
             String message = in.nextLine();
             String[] commandAndParams = message.split(" ", 2);
@@ -89,11 +90,11 @@ public class UCI {
         }
     }
 
-    private static void uci(String ignore) {
+    private static final void uci(String ignore) {
         out.println("id name " + name);
         out.println("id author " + author);
 
-        LinkedList<String> options = new LinkedList<>();
+        ArrayList<String> options = new ArrayList<>();
         for (String option : options) {
             out.println("option " + option);
         }
@@ -101,15 +102,15 @@ public class UCI {
         out.println("uciok");
     }
 
-    private static void setOption(String option) {
+    private static final void setOption(String option) {
         System.out.println("[TODO]: setOptions");
     }
 
-    private static void uciNewGame(String ignore) {
+    private static final void uciNewGame(String ignore) {
         System.out.println("[TODO]: cleanup for a new game");
     }
 
-    private static void isReady(String ignore) {
+    private static final void isReady(String ignore) {
         synchronized (Model.getLock()) {
             while (!Model.getReady()) {
                 try {
@@ -123,7 +124,7 @@ public class UCI {
         out.println("readyok");
     }
 
-    private static void position(String params) {
+    private static final void position(String params) {
         String[] moves = null;
         String fenStr = FEN.START_FEN;
         Matcher matcher = patternPosition.matcher(params);
@@ -137,12 +138,18 @@ public class UCI {
                 moves = matcher.group("moves").split(" ");
             }
 
-            Model.setPosition(fenStr, moves != null ? Arrays.stream(moves).collect(Collectors.toCollection(LinkedList::new)) : null);
+            if(moves != null) {
+                Model.setPosition(fenStr, Arrays.stream(moves).collect(Collectors.toCollection(ArrayList::new)));
+            } else {
+                Model.setPosition(fenStr);
+            }
+        } else {
+            System.out.println("Invalid arguments: position <fen ... | startpos> [moves ...]");
         }
     }
 
-    private static void go(String params) {
-        List<Optional<Integer>> options = Arrays.stream(goNumeralPatterns).map(pattern -> {
+    private static final void go(String params) {
+        ArrayList<Optional<Integer>> options = (ArrayList<Optional<Integer>>) Arrays.stream(goNumeralPatterns).map(pattern -> {
             Matcher matcher = pattern.matcher(params);
             Optional<Integer> option = Optional.empty();
 
@@ -174,7 +181,7 @@ public class UCI {
         }
     }
 
-    private static void print(String param) {
+    private static final void print(String param) {
         if (param.isEmpty()) {
             Printer.board();
         } else {
@@ -182,34 +189,56 @@ public class UCI {
         }
     }
 
-    private static void info(String ignore) {
-        out.println("\nTurn: " + (GameInfo.getTurn() ? "white" : "black") + "\nHalfmoves: "
+    private static final void info(String ignore) {
+        out.println("\nTurn: " + GameInfo.getTurnString() + "\nHalfmoves: "
                 + GameInfo.getHalfmoves() + "\nFullmoves: " + GameInfo.getFullmoves()
-                + "\nCastling: " + GameInfo.getCastlingString() + "\nSide: "
-                + GameInfo.getSideString() + "\n");
+                + "\nCastling: " + GameInfo.getCastlingString() + "\n");
     }
 
-    private static void autoperft(String param) {
-        Autoperft.test(param);
-
-        // Matcher matcher = patternTeacher.matcher(param);
-
-        // if(matcher.matches()) {
-        //     Autoperft.test(param.substring(8, param.length()));
-        // } else {
-        //     Autoperft.test(new FEN(param));
-        // }
+    private static final void autoperft(String param) {
+        if(param.equals("long") || param.isEmpty()) {
+            Autoperft.test(param);
+        } else {
+            out.println("Invalid arguments: autoperft [long]");
+        }
     }
 
-    private static void help(String ignore) {
-        out.println("[TODO]: help");
+    private static final void bisect(String param) {
+        if(param.isEmpty()) {
+            Autoperft.bisect(1, false);
+        } else {
+            Matcher matcher = patternBisect.matcher(param);
+
+            if(matcher.matches()) {
+                String[] params = param.split(" ");
+
+                Autoperft.bisect(Integer.valueOf(params[0]), (params.length > 1 ? true : false));
+            } else {
+                out.println("Invalid arguments: bisect [depth] [long]");
+            }
+        }
     }
 
-    private static void stop(String ignore) {
+    private static final void help(String ignore) {
+        out.println("Valid commands:\n" + 
+                    " - uci\n" + 
+                    " - setoption\n" +
+                    " - isready\n" + 
+                    " - position\n" + 
+                    " - go\n" +
+                    " - print [name]+\n" + 
+                    " - info\n" + 
+                    " - autoperft [long]\n" + 
+                    " - bisect [depth] [long]\n" + 
+                    " - stop\n" + 
+                    " - quit\n");
+    }
+
+    private static final void stop(String ignore) {
         out.println("[TODO]: stop calculating as soon as possible");
     }
 
-    private static void quit(String ignore) {
+    private static final void quit(String ignore) {
         Model.setRunning(false);
     }
 }

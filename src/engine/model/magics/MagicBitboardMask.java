@@ -7,7 +7,7 @@
 package engine.model.magics;
 
 public class MagicBitboardMask {
-    private static final Long[] ROOK_MASKS = {
+    private static final long[] ROOK_MASKS = {
         0x101010101017eL, // 0
         0x202020202027cL, // 1
         0x404040404047aL, // 2
@@ -81,7 +81,7 @@ public class MagicBitboardMask {
         0x7e80808080808000L, // 63 
     };
 
-    private static final Long[] BISHOP_MASKS = {
+    private static final long[] BISHOP_MASKS = {
         0x40201008040200L, // 0
         0x402010080400L, // 1
         0x4020100a00L, // 2
@@ -155,11 +155,11 @@ public class MagicBitboardMask {
         0x40201008040200L, // 63
     };
 
-    public static Long getRookMask(int square) {
+    public static final long getRookMask(int square) {
         return ROOK_MASKS[square];
     }
 
-    public static Long getBishopMask(int square) {
+    public static final long getBishopMask(int square) {
         return BISHOP_MASKS[square];
     }
 }
