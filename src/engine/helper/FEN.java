@@ -6,6 +6,9 @@
 
 package engine.helper;
 
+import engine.model.Board;
+import engine.model.GameInfo;
+
 public class FEN {
     public static final String[] COMMON_FENS = {
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", // [0] starting position
@@ -16,7 +19,7 @@ public class FEN {
 
     private StringBuilder fen;
     private StringBuilder turn;
-    private StringBuilder castling;
+    private StringBuilder castleRights;
     private StringBuilder ep;
     private int halfmoves = 0;
     private int fullmoves = 1;
@@ -37,9 +40,9 @@ public class FEN {
         }
 
         if (fields.length > 2) {
-            this.castling = new StringBuilder(fields[2]);
+            this.castleRights = new StringBuilder(fields[2]);
         } else {
-            this.castling = new StringBuilder("KQkq");
+            this.castleRights = new StringBuilder("KQkq");
         }
 
         if (fields.length > 3) {
@@ -61,32 +64,70 @@ public class FEN {
         }
     }
 
-    public String getFEN() {
+    public static final FEN create() {
+        StringBuilder fen = new StringBuilder();
+
+        int index = 0;
+        int space = 0;
+        for(int i = 0; i < 8; i++) {
+            for(int j = 0; j < 8; j++) {
+                index = (7-i) * 8 + j;
+                char c = Enum.codeToString(Board.get(index)).charAt(0);
+                
+                if(c == 'e') {
+                    if(Character.isDigit(fen.charAt(fen.length() - 1))) {
+                        fen.replace(fen.length() - 1, fen.length(), String.valueOf(++space));
+                    } else {
+                        fen.append(String.valueOf(++space));
+                    }
+                } else {
+                    fen.append(c);
+                    space = 0;
+                }
+            }
+
+            space = 0;
+            fen.append("/");
+        }
+
+        fen.deleteCharAt(fen.length() - 1);
+        fen.append(" " + GameInfo.getTurnString().charAt(0) + " " + GameInfo.getCastleRightsString() + " " + GameInfo.getEPString() + " " + GameInfo.getHalfmoves() + " " + GameInfo.getFullmoves());
+
+        return new FEN(fen.toString());
+    }
+
+    public final String getFEN() {
         return fen.toString();
     }
 
-    public String getTurn() {
+    public final String getTurn() {
         return turn.toString();
     }
 
-    public String getCastling() {
-        return castling.toString();
+    public final String getCastleRights() {
+        return castleRights.toString();
     }
 
-    public String getEp() {
+    public final String getEp() {
         return ep.toString();
     }
 
-    public int getHalfmoves() {
+    public final int getHalfmoves() {
         return halfmoves;
     }
 
-    public int getFullmoves() {
+    public final int getFullmoves() {
         return fullmoves;
     }
 
-    public String get() {
-        return fen.toString() + " " + turn.toString() + " " + castling.toString() + " " + ep.toString() + " "
+    public final String get() {
+        return fen.toString() + " " + turn.toString() + " " + castleRights.toString() + " " + ep.toString() + " "
+                + halfmoves + " " + fullmoves;
+    }
+
+    @Override
+    public final String toString() {
+        return fen.toString() + " " + turn.toString() + " " + castleRights.toString() + " " + ep.toString() + " "
                 + halfmoves + " " + fullmoves;
     }
 }

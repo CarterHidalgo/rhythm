@@ -122,24 +122,24 @@ public class MagicBitboard {
         58, 59, 59, 59, 59, 59, 59, 58
     };
     
-    public static void init() {
+    public static final void init() {
         initAttacks();
         initLookups();
     }
 
-    public static long getRookMoves(int square) {
-        return attacks[attacksOffsets[square] + (lookups[transform(Bitboard.get(Enum.OCCUPIED) & MagicBitboardMask.getRookMask(square), MagicNumbers.ROOK_MAGICS[square], rookShift[square]) + lookupsOffsets[square]] & 0xFF)];
+    public static final long getRookMoves(int square) {
+        return attacks[attacksOffsets[square] + (lookups[transform(Bitboard.get(Enum.OCCUPIED) & MagicBitboardMask.getRookBlockerMask(square), MagicNumbers.ROOK_MAGICS[square], rookShift[square]) + lookupsOffsets[square]] & 0xFF)];
     }
 
-    public static long getBishopMoves(int square) {
-        return attacks[attacksOffsets[square + 64] + (lookups[transform(Bitboard.get(Enum.OCCUPIED) & MagicBitboardMask.getBishopMask(square), MagicNumbers.BISHOP_MAGICS[square], bishopShift[square]) + lookupsOffsets[square + 64]] & 0xFF)];
+    public static final long getBishopMoves(int square) {
+        return attacks[attacksOffsets[square + 64] + (lookups[transform(Bitboard.get(Enum.OCCUPIED) & MagicBitboardMask.getBishopBlockerMask(square), MagicNumbers.BISHOP_MAGICS[square], bishopShift[square]) + lookupsOffsets[square + 64]] & 0xFF)];
     }
 
-    public static long getQueenMoves(int square) {
+    public static final long getQueenMoves(int square) {
         return getRookMoves(square) | getBishopMoves(square);
     }
 
-    private static void initAttacks() {
+    private static final void initAttacks() {
         short attacksIndex = 0;
         long[] blockerSet;
         long attack;
@@ -147,7 +147,7 @@ public class MagicBitboard {
         ArrayList<Long> usedBishopAttacks = new ArrayList<>();
 
         for(byte square = 0; square < 64; square++) {
-            blockerSet = createBlockerSet(MagicBitboardMask.getRookMask(square));
+            blockerSet = createBlockerSet(MagicBitboardMask.getRookBlockerMask(square));
             attacksOffsets[square] = attacksIndex;
 
             for(long config : blockerSet) {
@@ -163,7 +163,7 @@ public class MagicBitboard {
         }
 
         for(byte square = 0; square < 64; square++) {
-            blockerSet = createBlockerSet(MagicBitboardMask.getBishopMask(square));
+            blockerSet = createBlockerSet(MagicBitboardMask.getBishopBlockerMask(square));
             attacksOffsets[square + 64] = attacksIndex;
 
             for(long config : blockerSet) {
@@ -179,7 +179,7 @@ public class MagicBitboard {
         }
     }
 
-    private static void initLookups() {
+    private static final void initLookups() {
         short attacksIndex;
         int lookupsIndex, shift;
         long attack;
@@ -188,7 +188,7 @@ public class MagicBitboard {
         int lookupsOffsetCounter = 0;
         
         for(byte square = 0; square < 64; square++) {
-            blockerSet = createBlockerSet(MagicBitboardMask.getRookMask(square));
+            blockerSet = createBlockerSet(MagicBitboardMask.getRookBlockerMask(square));
             magic = MagicNumbers.ROOK_MAGICS[square];
             shift = rookShift[square];
 
@@ -211,7 +211,7 @@ public class MagicBitboard {
         }
 
         for(byte square = 0; square < 64; square++) {
-            blockerSet = createBlockerSet(MagicBitboardMask.getBishopMask(square));
+            blockerSet = createBlockerSet(MagicBitboardMask.getBishopBlockerMask(square));
             magic = MagicNumbers.BISHOP_MAGICS[square];
             shift = bishopShift[square];
 
@@ -234,7 +234,7 @@ public class MagicBitboard {
         }
     }
 
-    private static long[] createBlockerSet(long mask) {
+    private static final long[] createBlockerSet(long mask) {
         int maxNumConfigs = (int) Math.pow(2, Long.bitCount(mask));
         long[] blockerBitboards = new long[maxNumConfigs];
         long config = 0L;
@@ -248,7 +248,7 @@ public class MagicBitboard {
         return blockerBitboards;
     }
 
-    private static long createAttack(int square, long config, boolean major) {
+    private static final long createAttack(int square, long config, boolean major) {
         long attack = 0;
 
         Coord[] directions = (major) ? Coord.rookDirections : Coord.bishopDirections;
@@ -273,11 +273,11 @@ public class MagicBitboard {
         return attack;
     }
 
-    private static int transform(long config, long magic, int shift) {
+    private static final int transform(long config, long magic, int shift) {
         return (int) (((config * magic) >>> (shift)) & 0xFFFFFFFFL);
     }
 
-    private static short indexOfAttack(byte square, long attack, boolean major) {
+    private static final short indexOfAttack(byte square, long attack, boolean major) {
         int majorOffset = major ? 0 : 64;
         
         for(short i = attacksOffsets[square + majorOffset]; i < attacksOffsets[square + majorOffset] + 144; i++) {

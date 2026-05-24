@@ -1,226 +1,373 @@
 /*
  * Author: Carter Hidalgo
  * 
- * Purpose: Create a list of all pseudo-legal moves given the current position
+ * Purpose: Create a list of all pseudolegal/legal moves given the current position
  */
 
 package engine.model;
 
-import java.util.ArrayList;
-import java.util.List;
-import engine.helper.Bit;
 import engine.helper.Enum;
-import engine.helper.Offset;
 import engine.model.magics.MagicBitboard;
-import engine.model.moves.KingMoves;
-import engine.model.moves.KnightMoves;
 
 public class MoveGeneration {
-    public static List<Short> gen() {
-        List<Short> moves = new ArrayList<>();
+    private static MoveList temp = new MoveList();
 
-        addPawnMoves(moves);
-        addKnightMoves(moves);
-        addBishopMoves(moves);
-        addRookMoves(moves);
-        addQueenMoves(moves);
-        addKingMoves(moves);
+    public static final MoveList genLegal(MoveList legalMoves) {
+        int turn = GameInfo.getTurn();
 
-        return moves;
+        // if(King.inCheck(turn)) {
+            // special move generation when king is in check
+        // }
+
+        temp.clear();
+        temp = genPseudo(temp);
+
+        short move;
+        for(int i = 0; i < temp.size(); i++) {
+            move = temp.get(i);
+            
+            if(Move.isLegal(move, turn)) {
+                legalMoves.add(move);
+            }
+        }
+
+        return legalMoves;
     }
 
-    private static void addPawnMoves(List<Short> moves) {
-        long self = Bitboard.getSelf(Enum.PAWN);
-        int index;
+    public static final MoveList genPseudo(MoveList pseudoMoves) {
+        pseudoMoves.clear();
 
-        while (self != 0) {
-            index = Long.numberOfTrailingZeros(self);
+        long self = Bitboard.getSelf();
+        long op = Bitboard.getOp();
+        long empty = Bitboard.getEmpty();
+        long promo = Bitboard.getSelf(Enum.PROMO);
+        long ep = Bitboard.get(Enum.EP);
 
-            if (Bit.isSet(Bitboard.get(Enum.EMPTY), Offset.forward(index))) {
-                if (Bit.isSet(Bitboard.getSelf(Enum.PROMO), Offset.forward(index))) {
-                    moves.add(Move.create(index, Offset.forward(index), Move.QUEEN_PROMO));
-                    moves.add(Move.create(index, Offset.forward(index), Move.ROOK_PROMO));
-                    moves.add(Move.create(index, Offset.forward(index), Move.BISHOP_PROMO));
-                    moves.add(Move.create(index, Offset.forward(index), Move.KNIGHT_PROMO));
-                } else {
-                    moves.add(Move.create(index, Offset.forward(index), Move.QUIET));
-                }
+        addPawnMoves(pseudoMoves, self, op, empty, promo, ep);
+        addKnightMoves(pseudoMoves, self, op, empty, promo);
+        addBishopMoves(pseudoMoves, self, op, empty, promo);
+        addRookMoves(pseudoMoves, self, op, empty, promo);
+        addQueenMoves(pseudoMoves, self, op, empty, promo);
+        addKingMoves(pseudoMoves, self, op, empty, promo);
+        
+        return pseudoMoves;
+    }
 
-                if (Bit.isSet(Bitboard.get(Enum.EMPTY), Offset.dbForward(index))
-                        && Bit.isSet(Bitboard.getSelf(Enum.HOME), index)) {
-                    moves.add(Move.create(index, Offset.dbForward(index), Move.DOUBLE_PAWN));
-                }
-            }
+    private static final void addPawnMoves(MoveList moves, long self, long op, long empty, long promo, long ep) {
+        boolean white = GameInfo.getTurn() == Enum.WHITE;
 
-            if (Offset.lForward(index) != -1
-                    && Bit.isSet(Bitboard.getOp(), Offset.lForward(index))) {
-                if (Bit.isSet(Bitboard.getSelf(Enum.PROMO), Offset.lForward(index))) {
-                    moves.add(Move.create(index, Offset.lForward(index), Move.QUEEN_PROMO_CAPTURE));
-                    moves.add(Move.create(index, Offset.lForward(index), Move.ROOK_PROMO_CAPTURE));
-                    moves.add(
-                            Move.create(index, Offset.lForward(index), Move.BISHOP_PROMO_CAPTURE));
-                    moves.add(
-                            Move.create(index, Offset.lForward(index), Move.KNIGHT_PROMO_CAPTURE));
-                } else {
-                    moves.add(Move.create(index, Offset.lForward(index), Move.CAPTURE));
-                }
-            }
-
-            if (Offset.rForward(index) != -1
-                    && Bit.isSet(Bitboard.getOp(), Offset.rForward(index))) {
-                if (Bit.isSet(Bitboard.getSelf(Enum.PROMO), Offset.rForward(index))) {
-                    moves.add(Move.create(index, Offset.rForward(index), Move.QUEEN_PROMO_CAPTURE));
-                    moves.add(Move.create(index, Offset.rForward(index), Move.ROOK_PROMO_CAPTURE));
-                    moves.add(
-                            Move.create(index, Offset.rForward(index), Move.BISHOP_PROMO_CAPTURE));
-                    moves.add(
-                            Move.create(index, Offset.rForward(index), Move.KNIGHT_PROMO_CAPTURE));
-                } else {
-                    moves.add(Move.create(index, Offset.rForward(index), Move.CAPTURE));
-                }
-            }
-
-            self = Bit.clear(self, index);
+        if(white) {
+            addWhitePawns(moves, self, op, empty, promo, ep);
+        } else {
+            addBlackPawns(moves, self, op, empty, promo, ep);
         }
     }
 
-    private static void addKnightMoves(List<Short> moves) {
-        long to;
-        long self = Bitboard.getSelf(Enum.KNIGHT);
-        int fromIndex, toIndex;
+    private static final void addWhitePawns(MoveList moves, long self, long op, long empty, long promo, long ep) {
+        long pawns = Bitboard.getSelf(Enum.PAWN);        
+        long pushes = (pawns << 8) & empty;
+        long quiets = pushes & ~promo;
+        long doubles = ((quiets & Bitboard.RANK_3) << 8) & empty;
+        long leftCaptures = ((pawns & ~Bitboard.FILE_A) << 7) & op;
+        long rightCaptures = ((pawns & ~Bitboard.FILE_H) << 9) & op;
+        long promos = pushes & promo;
+        long leftCapturePromos = leftCaptures & op & promo;
+        long rightCapturePromos = rightCaptures & op & promo;
+        long leftEPs = ((pawns & ~Bitboard.FILE_A) << 7) & ep & Bitboard.RANK_6;
+        long rightEPs = ((pawns & ~Bitboard.FILE_H) << 9) & ep & Bitboard.RANK_6;
+        int to;
 
-        while (self != 0) {
-            fromIndex = Long.numberOfTrailingZeros(self);
-            to = KnightMoves.get(fromIndex) & ~Bitboard.getSelf();
+        leftCaptures ^= leftCapturePromos;
+        rightCaptures ^= rightCapturePromos;
 
-            while (to != 0) {
-                toIndex = Long.numberOfTrailingZeros(to);
-
-                if (Bit.isSet(Bitboard.getOp(), toIndex)) {
-                    moves.add(Move.create(fromIndex, toIndex, Move.CAPTURE));
-                } else {
-                    moves.add(Move.create(fromIndex, toIndex, Move.QUIET));
-                }
-
-                to = Bit.clear(to, toIndex);
+        while (pawns != 0) {
+            while (leftCaptures != 0) {
+                to = Long.numberOfTrailingZeros(leftCaptures);
+                moves.add(Move.create(to - 7, to, Move.CAPTURE));
+                leftCaptures &= leftCaptures - 1;
             }
 
-            self = Bit.clear(self, fromIndex);
+            while (rightCaptures != 0) {
+                to = Long.numberOfTrailingZeros(rightCaptures);
+                moves.add(Move.create(to - 9, to, Move.CAPTURE));
+                rightCaptures &= rightCaptures - 1;
+            }
+
+            while (quiets != 0) {
+                to = Long.numberOfTrailingZeros(quiets);
+                moves.add(Move.create(to - 8, to, Move.QUIET));
+                quiets &= quiets - 1;
+            }
+
+            while (doubles != 0) {
+                to = Long.numberOfTrailingZeros(doubles);
+                moves.add(Move.create(to - 16, to, Move.DOUBLE_PAWN));
+                doubles &= doubles - 1;
+            }
+
+            while (promos != 0) {
+                to = Long.numberOfTrailingZeros(promos);
+                moves.add(Move.create(to - 8, to, Move.KNIGHT_PROMO));
+                moves.add(Move.create(to - 8, to, Move.BISHOP_PROMO));
+                moves.add(Move.create(to - 8, to, Move.ROOK_PROMO));
+                moves.add(Move.create(to - 8, to, Move.QUEEN_PROMO));
+                promos &= promos - 1;
+            }
+
+            while (leftCapturePromos != 0) {
+                to = Long.numberOfTrailingZeros(leftCapturePromos);
+                moves.add(Move.create(to - 7, to, Move.KNIGHT_PROMO_CAPTURE));
+                moves.add(Move.create(to - 7, to, Move.BISHOP_PROMO_CAPTURE));
+                moves.add(Move.create(to - 7, to, Move.ROOK_PROMO_CAPTURE));
+                moves.add(Move.create(to - 7, to, Move.QUEEN_PROMO_CAPTURE));
+                leftCapturePromos &= leftCapturePromos - 1;
+            }
+
+            while (rightCapturePromos != 0) {
+                to = Long.numberOfTrailingZeros(rightCapturePromos);
+                moves.add(Move.create(to - 9, to, Move.KNIGHT_PROMO_CAPTURE));
+                moves.add(Move.create(to - 9, to, Move.BISHOP_PROMO_CAPTURE));
+                moves.add(Move.create(to - 9, to, Move.ROOK_PROMO_CAPTURE));
+                moves.add(Move.create(to - 9, to, Move.QUEEN_PROMO_CAPTURE));
+                rightCapturePromos &= rightCapturePromos - 1;
+            }
+
+            while (leftEPs != 0) {
+                to = Long.numberOfTrailingZeros(leftEPs);
+                moves.add(Move.create(to - 7, to, Move.EP_CAPTURE));
+                leftEPs &= leftEPs - 1;
+            }
+
+            while (rightEPs != 0) {
+                to = Long.numberOfTrailingZeros(rightEPs);
+                moves.add(Move.create(to - 9, to, Move.EP_CAPTURE));
+                rightEPs &= rightEPs - 1;
+            }
+
+            pawns &= pawns - 1;
         }
     }
 
-    private static void addBishopMoves(List<Short> moves) {
-        long to;
-        long self = Bitboard.getSelf(Enum.BISHOP);
-        int fromIndex, toIndex;
+    private static final void addBlackPawns(MoveList moves, long self, long op, long empty, long promo, long ep) {
+        long pawns = Bitboard.getSelf(Enum.PAWN);
+        long pushes = (pawns >>> 8) & empty;
+        long quiets = pushes & ~promo;
+        long doubles = ((quiets & Bitboard.RANK_6) >>> 8) & empty;
+        long leftCaptures = ((pawns & ~Bitboard.FILE_H) >>> 7) & op;
+        long rightCaptures = ((pawns & ~Bitboard.FILE_A) >>> 9) & op;
+        long promos = pushes & promo;
+        long leftCapturePromos = leftCaptures & op & promo;
+        long rightCapturePromos = rightCaptures & op & promo;
+        long leftEPs = ((pawns & ~Bitboard.FILE_H) >>> 7) & ep & Bitboard.RANK_3;
+        long rightEPs = ((pawns & ~Bitboard.FILE_A) >>> 9) & ep & Bitboard.RANK_3;
+        int to;
 
-        while (self != 0) {
-            fromIndex = Long.numberOfTrailingZeros(self);
-            to = MagicBitboard.getBishopMoves(fromIndex) & ~Bitboard.getSelf();
+        leftCaptures ^= leftCapturePromos;
+        rightCaptures ^= rightCapturePromos;
 
-            while (to != 0) {
-                toIndex = Long.numberOfTrailingZeros(to);
-
-                if (Bit.isSet(Bitboard.getOp(), toIndex)) {
-                    moves.add(Move.create(fromIndex, toIndex, Move.CAPTURE));
-                } else {
-                    moves.add(Move.create(fromIndex, toIndex, Move.QUIET));
-                }
-
-                to = Bit.clear(to, toIndex);
+        while (pawns != 0) {
+            while (leftCaptures != 0) {
+                to = Long.numberOfTrailingZeros(leftCaptures);
+                moves.add(Move.create(to + 7, to, Move.CAPTURE));
+                leftCaptures &= leftCaptures - 1;
             }
 
-            self = Bit.clear(self, fromIndex);
+            while (rightCaptures != 0) {
+                to = Long.numberOfTrailingZeros(rightCaptures);
+                moves.add(Move.create(to + 9, to, Move.CAPTURE));
+                rightCaptures &= rightCaptures - 1;
+            }
+
+            while (quiets != 0) {
+                to = Long.numberOfTrailingZeros(quiets);
+                moves.add(Move.create(to + 8, to, Move.QUIET));
+                quiets &= quiets - 1;
+            }
+
+            while (doubles != 0) {
+                to = Long.numberOfTrailingZeros(doubles);
+                moves.add(Move.create(to + 16, to, Move.DOUBLE_PAWN));
+                doubles &= doubles - 1;
+            }
+
+            while (promos != 0) {
+                to = Long.numberOfTrailingZeros(promos);
+                moves.add(Move.create(to + 8, to, Move.KNIGHT_PROMO));
+                moves.add(Move.create(to + 8, to, Move.BISHOP_PROMO));
+                moves.add(Move.create(to + 8, to, Move.ROOK_PROMO));
+                moves.add(Move.create(to + 8, to, Move.QUEEN_PROMO));
+                promos &= promos - 1;
+            }
+
+            while (leftCapturePromos != 0) {
+                to = Long.numberOfTrailingZeros(leftCapturePromos);
+                moves.add(Move.create(to + 7, to, Move.KNIGHT_PROMO_CAPTURE));
+                moves.add(Move.create(to + 7, to, Move.BISHOP_PROMO_CAPTURE));
+                moves.add(Move.create(to + 7, to, Move.ROOK_PROMO_CAPTURE));
+                moves.add(Move.create(to + 7, to, Move.QUEEN_PROMO_CAPTURE));
+                leftCapturePromos &= leftCapturePromos - 1;
+            }
+
+            while (rightCapturePromos != 0) {
+                to = Long.numberOfTrailingZeros(rightCapturePromos);
+                moves.add(Move.create(to + 9, to, Move.KNIGHT_PROMO_CAPTURE));
+                moves.add(Move.create(to + 9, to, Move.BISHOP_PROMO_CAPTURE));
+                moves.add(Move.create(to + 9, to, Move.ROOK_PROMO_CAPTURE));
+                moves.add(Move.create(to + 9, to, Move.QUEEN_PROMO_CAPTURE));
+                rightCapturePromos &= rightCapturePromos - 1;
+            }
+
+            while (leftEPs != 0) {
+                to = Long.numberOfTrailingZeros(leftEPs);
+                moves.add(Move.create(to + 7, to, Move.EP_CAPTURE));
+                leftEPs &= leftEPs - 1;
+            }
+
+            while (rightEPs != 0) {
+                to = Long.numberOfTrailingZeros(rightEPs);
+                moves.add(Move.create(to + 9, to, Move.EP_CAPTURE));
+                rightEPs &= rightEPs - 1;
+            }
+
+            pawns &= pawns - 1;
         }
     }
 
-    private static void addRookMoves(List<Short> moves) {
-        long to;
-        long self = Bitboard.getSelf(Enum.ROOK);
-        int fromIndex, toIndex;
+    private static final void addKnightMoves(MoveList moves, long self, long op, long empty, long promo) {
+        long knights = Bitboard.getSelf(Enum.KNIGHT);
+        long to, captures, quiets;
+        int from;
 
-        while (self != 0) {
-            fromIndex = Long.numberOfTrailingZeros(self);
-            to = MagicBitboard.getRookMoves(fromIndex) & ~Bitboard.getSelf();
+        while (knights != 0) {
+            from = Long.numberOfTrailingZeros(knights);
+            to = AttackTable.KNIGHT_ATTACKS[from] & ~self;
 
-            while (to != 0) {
-                toIndex = Long.numberOfTrailingZeros(to);
+            captures = to & op;
+            quiets = to & ~op;
 
-                if (Bit.isSet(Bitboard.getOp(), toIndex)) {
-                    moves.add(Move.create(fromIndex, toIndex, Move.CAPTURE));
-                } else {
-                    moves.add(Move.create(fromIndex, toIndex, Move.QUIET));
-                }
-
-                to = Bit.clear(to, toIndex);
+            while(captures != 0) {
+                moves.add(Move.create(from, Long.numberOfTrailingZeros(captures), Move.CAPTURE));
+                captures &= captures - 1;
             }
 
-            self = Bit.clear(self, fromIndex);
+            while(quiets != 0) {
+                moves.add(Move.create(from, Long.numberOfTrailingZeros(quiets), Move.QUIET));
+                quiets &= quiets - 1;
+            }
+
+            knights &= knights - 1;
         }
     }
 
-    private static void addQueenMoves(List<Short> moves) {
-        long to;
-        long self = Bitboard.getSelf(Enum.QUEEN);
-        int fromIndex, toIndex;
+    private static final void addBishopMoves(MoveList moves, long self, long op, long empty, long promo) {
+        long bishops = Bitboard.getSelf(Enum.BISHOP);
+        long to, captures, quiets;
+        int from;
 
-        while (self != 0) {
-            fromIndex = Long.numberOfTrailingZeros(self);
-            to = MagicBitboard.getQueenMoves(fromIndex) & ~Bitboard.getSelf();
+        while (bishops != 0) {
+            from = Long.numberOfTrailingZeros(bishops);
+            to = MagicBitboard.getBishopMoves(from) & ~self;
 
-            while (to != 0) {
-                toIndex = Long.numberOfTrailingZeros(to);
+            captures = to & op;
+            quiets = to & ~op;
 
-                if (Bit.isSet(Bitboard.getOp(), toIndex)) {
-                    moves.add(Move.create(fromIndex, toIndex, Move.CAPTURE));
-                } else {
-                    moves.add(Move.create(fromIndex, toIndex, Move.QUIET));
-                }
-
-                to = Bit.clear(to, toIndex);
+            while(captures != 0) {
+                moves.add(Move.create(from, Long.numberOfTrailingZeros(captures), Move.CAPTURE));
+                captures &= captures - 1;
             }
 
-            self = Bit.clear(self, fromIndex);
+            while(quiets != 0) {
+                moves.add(Move.create(from, Long.numberOfTrailingZeros(quiets), Move.QUIET));
+                quiets &= quiets - 1;
+            }
+
+            bishops &= bishops - 1;
         }
     }
 
-    private static void addKingMoves(List<Short> moves) {
-        long to;
-        long self = Bitboard.getSelf(Enum.KING);
-        int fromIndex, toIndex;
+    private static final void addRookMoves(MoveList moves, long self, long op, long empty, long promo) {
+        long to, captures, quiets;
+        long rooks = Bitboard.getSelf(Enum.ROOK);
+        int from;
 
-        while (self != 0) {
-            fromIndex = Long.numberOfTrailingZeros(self);
-            to = KingMoves.get(fromIndex) & ~Bitboard.getSelf();
+        while (rooks != 0) {
+            from = Long.numberOfTrailingZeros(rooks);
+            to = MagicBitboard.getRookMoves(from) & ~self;
 
-            while (to != 0) {
-                toIndex = Long.numberOfTrailingZeros(to);
+            captures = to & op;
+            quiets = to & ~op;
 
-                if (Bit.isSet(Bitboard.getOp(), toIndex)) {
-                    moves.add(Move.create(fromIndex, toIndex, Move.CAPTURE));
-                } else {
-                    moves.add(Move.create(fromIndex, toIndex, Move.QUIET));
-                }
-
-                to = Bit.clear(to, toIndex);
+            while (captures != 0) {
+                moves.add(Move.create(from, Long.numberOfTrailingZeros(captures), Move.CAPTURE));
+                captures &= captures - 1;
             }
 
-            self = Bit.clear(self, fromIndex);
+            while (quiets != 0) {
+                moves.add(Move.create(from, Long.numberOfTrailingZeros(quiets), Move.QUIET));
+                quiets &= quiets - 1;
+            }
 
-            // if (GameInfo.getCastleRights(GameInfo.getTurn(), 0) &&
-            // Bit.isSet(Bitboard.getSelf(Enum.ROOK), fromIndex + 3) &&
-            // !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex + 1) &&
-            // !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex + 2)) {
-            // moves.add(Move.create(fromIndex, fromIndex + 2, Move.KING_CASTLE));
-            // }
-
-            // if (GameInfo.getCastleRights(GameInfo.getTurn(), 1) &&
-            // Bit.isSet(Bitboard.getSelf(Enum.ROOK), fromIndex + 3) &&
-            // !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex - 1) &&
-            // !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex - 2) &&
-            // !Bit.isSet(Bitboard.get(Enum.OCCUPIED), fromIndex - 3)) {
-            // moves.add(Move.create(fromIndex, fromIndex - 2, Move.QUEEN_CASTLE));
-            // }
+            rooks &= rooks - 1;
         }
+    }
+
+    private static final void addQueenMoves(MoveList moves, long self, long op, long empty, long promo) {
+        long to, captures, quiets;
+        long queens = Bitboard.getSelf(Enum.QUEEN);
+        int from;
+
+        while (queens != 0) {
+            from = Long.numberOfTrailingZeros(queens);
+            to = MagicBitboard.getQueenMoves(from) & ~self;
+
+            captures = to & op;
+            quiets = to & ~op;
+
+            while (captures != 0) {
+                moves.add(Move.create(from, Long.numberOfTrailingZeros(captures), Move.CAPTURE));
+                captures &= captures - 1;
+            }
+
+            while (quiets != 0) {
+                moves.add(Move.create(from, Long.numberOfTrailingZeros(quiets), Move.QUIET));
+                quiets &= quiets - 1;
+            }
+
+            queens &= queens - 1;
+        }
+    }
+
+    private static final void addKingMoves(MoveList moves, long self, long op, long empty, long promo) {
+        long kings = Bitboard.getSelf(Enum.KING);
+        int from = Long.numberOfTrailingZeros(kings);
+        long to = AttackTable.KING_ATTACKS[from] & ~self;
+        long captures = to & op;
+        long quiets = to & ~op;
+        int castleRights = GameInfo.getCastleRights();
+        int turn = GameInfo.getTurn();
+
+        while (captures != 0) {
+            moves.add(Move.create(from, Long.numberOfTrailingZeros(captures), Move.CAPTURE));
+            captures &= captures - 1;
+        }
+
+        while (quiets != 0) {
+            moves.add(Move.create(from, Long.numberOfTrailingZeros(quiets), Move.QUIET));
+            quiets &= quiets - 1;
+        }
+
+
+        if((castleRights & GameInfo.castleType[turn + Enum.QUEEN]) != 0)  {
+            if((~empty & (0xeL << (turn * 7))) == 0) {
+                moves.add(Move.create(from, from - 2, Move.QUEEN_CASTLE));
+            }
+        }
+
+        if((castleRights & GameInfo.castleType[turn + Enum.KING]) != 0) {
+            if((~empty & (0x60L << (turn * 7))) == 0) {
+                moves.add(Move.create(from, from + 2, Move.KING_CASTLE));
+            }
+        }
+
     }
 }

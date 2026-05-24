@@ -15,16 +15,21 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Pattern;
+
 import engine.model.Model;
+import engine.model.Printer;
 
 public class Autoperft {
+    public static final int TEST_SIZE = 130;
     private static final Path teacherPath = Paths.get("src", "resources", "stockfish.exe");
-    private static final Path perftsuitePath = Paths.get("src", "resources", "perftsuite.epd");
+    private static final Path perftsuitePath = Paths.get("src", "resources", "perftsuite.txt");
     private static List<String> tests = new ArrayList<>();
     private static Process process;
     private static BufferedWriter writer;
@@ -34,7 +39,11 @@ public class Autoperft {
     private static final Pattern patternNodes = Pattern.compile("Nodes searched: \\d+");
     private static final Pattern patternMoves = Pattern.compile("[a-h][1-8][a-h][1-8][qrbn]?: (\\d+)");
 
-    public static boolean test(String mode) {
+    public static final boolean test(String mode) {
+        return test(0, mode);
+    }
+
+    public static final boolean test(int testStart, String mode) {
         if (!openProcess(teacherPath.toString())) {
             System.out.println("Unable to open teacher executable at path \"" + teacherPath + "\"");
             return false;
@@ -54,20 +63,26 @@ public class Autoperft {
             return false;
         }
 
-        System.out.println("\n" + tests.size() + " tests loaded\n");
+        boolean singleMode = mode.equals("single");
 
-        for (int i = 0; i < tests.size(); i++) {
-            System.out.println("Test " + (i + 1) + "/" + tests.size());
+        System.out.println((singleMode ? "1 test loaded" : tests.size() + " tests loaded"));
+
+        for (int i = testStart; i < tests.size(); i++) {
+            if(singleMode) {
+                System.out.println("\nTest 1/1");
+            } else {
+                System.out.println("\nTest " + (i + 1) + "/" + tests.size());
+            }
             String[] parts = tests.get(i).split(" ;");
 
-            System.out.println(" FEN: " + parts[0]);
+            System.out.println("FEN: " + parts[0]);
 
             for (int depth = 1; depth < parts.length; depth++) {
-                Model.setPosition(parts[0], null);
+                Model.setPosition(parts[0]);
                 long studentNodes = Model.perft(depth, false);
                 long teacherNodes = Long.valueOf(parts[depth].split(" ")[1]);
                 
-                System.out.printf("%-10s%15d ", "Depth: " + depth, studentNodes);
+                System.out.printf("%-10s%15d ", " Depth: " + depth, studentNodes);
                 
                 if (studentNodes == teacherNodes) {
                     Printer.green("PASS");
@@ -76,103 +91,136 @@ public class Autoperft {
                     Printer.red("FAIL");
                     System.out.println(", expected " + teacherNodes);
 
-                    bisect(depth, parts[0], mode);
+                    boolean longMode = mode.equals("long");
+                    bisect(depth, parts[0], longMode);
                     closeProcess();
 
                     return false;
                 }
             }
+
+            if(singleMode) {
+                break;
+            }
         }
 
         Printer.green("All tests passed\n");
+        closeProcess();
 
         return true;
     }
 
-    public static boolean test(FEN fen) {
+    public static final boolean test(FEN fen) {
         System.out.println("[TODO]: autoperft with fen " + fen);
         return false;
     }
 
-    private static void bisect(int depth, String fenStr, String mode) {
-        System.out.println("\nBisecting in " + (mode.equals("long") ? "long" : "normal") + " mode...");
-        bisect(depth, depth, fenStr, mode, new ArrayList<String>());
+    public static final void bisect(boolean longMode) {
+        if (!openProcess(teacherPath.toString())) {
+            System.out.println("Unable to open teacher executable at path \"" + teacherPath + "\"");
+
+            return;
+        }
+
+        String fenStr = FEN.create().toString();
+
+        bisect(1, fenStr, longMode);
+        closeProcess();
+
+        Model.setPosition(fenStr);
     }
 
-    private static void bisect(int depth, int totalDepth, String fenStr, String mode, List<String> moves) {
-        for(int d = depth; d > 0; d--) {
-            Map<String, Long> teacherPerftMap = getTeacherPerftMap(d, fenStr, new ArrayList<String>(moves));
-            Map<String, Long> studentPerftMap = Model.getPerftMap(d, fenStr, new ArrayList<String>(moves));
+    private static final void bisect(int depth, String fenStr, boolean longMode) {
+        bisect(depth, fenStr, new ArrayList<>(), new ArrayList<>(), longMode, true);
+        Printer.board();
+    }
+    
+    private static final void bisect(int depth, String fenStr, List<String> moves, List<String> branch, boolean longMode, boolean root) {
+        if(root) {
+            System.out.println("\nBisecting in " + (longMode ? "long" : "normal") + " mode...");
+        }
+        
+        Map<String, Long> teacherMap = getTeacherPerftMap(depth, fenStr, moves);
+        Map<String, Long> studentMap = Model.getPerftMap(depth, fenStr, moves);
 
-            int count = 0;
-            for (String key : studentPerftMap.keySet()) {
-                if (!teacherPerftMap.containsKey(key)) {
-                    if(count < 10) {
-                        Printer.green("  ".repeat(moves.size()) + "  - " + key + " extra" + ((count < 9) ? "\n" : ""));
-                    }
+        Set<String> extra = new HashSet<>(studentMap.keySet());
+        extra.removeAll(teacherMap.keySet());
 
-                    count++;
-                }
-            }
+        Set<String> missing = new HashSet<>(teacherMap.keySet());
+        missing.removeAll(studentMap.keySet());
 
-            if(count > 10) {
-                System.out.println(" ... and " + (count - 10) + " more");
-            }
+        String indent = " " + "  ".repeat(moves.size());
 
-            int minDiff = Integer.MAX_VALUE;
-            int faultyMoves = 0;
-            String move = "";
+        for(Map.Entry<String, Long> entry : teacherMap.entrySet()) {
+            String key = entry.getKey();
+            Long student = studentMap.get(key);
             
-            for (String key : teacherPerftMap.keySet()) {
-                int diff = Math.abs(studentPerftMap.get(key).intValue() - teacherPerftMap.get(key).intValue());
-                if (studentPerftMap.containsKey(key) && diff != 0) {
-                    faultyMoves++;
-
-                    if(mode.equals("long")) {
-                        moves.add(key);
-                        
-                        System.out.print("  ".repeat(moves.size()) + (totalDepth - depth + 1) + ". " + key + " (");
-                        Printer.red(String.valueOf(studentPerftMap.get(key)));
-                        System.out.print(" != ");
-                        Printer.green(String.valueOf(teacherPerftMap.get(key)));
-                        System.out.println(")");
-                        
-                        bisect(d - 1, totalDepth, fenStr, mode, moves);
-                        
-                        moves.removeLast();
-                    } else if(diff < minDiff) {
-                        minDiff = diff;
-                        move = key;
-                    }
-                }
+            if(student != null) {
+                long teacher = entry.getValue();
+                long diff = Math.abs(student - teacher);
                 
-                count = 0;
-                if (!studentPerftMap.containsKey(key)) {
-                    if(count < 10) {
-                        Printer.red("  ".repeat(moves.size()) + "  - " + key + " missing" + ((count < 9) ? "\n" : ""));
+                if(diff != 0) {
+                    if(!longMode) {
+                        branch.add(key);
                     }
 
-                    count++;
-                }
+                    moves.add(key);
 
-                if (count > 10) {
-                    System.out.println(" ... and " + (count - 10) + " more");
+                    System.out.print(indent + depth + ". " + key + " (");
+                    Printer.red(student);
+                    System.out.print(" != ");
+                    Printer.green(teacher);
+                    System.out.println(")");
+
+                    if(depth > 1) {
+                        bisect(depth - 1, fenStr, moves, branch, longMode, false);
+                    }
+
+                    moves.removeLast();
+                    
+                    if(!longMode) {
+                        break;
+                    }
                 }
             }
+        }
 
-            if(!move.isEmpty()) {
-                moves.add(move);
+        printMissing(missing);
+        printExtra(extra);
 
-                System.out.print("  ".repeat(moves.size()) + (totalDepth - d + 1) + ". " + move + " (");
-                Printer.red(String.valueOf(studentPerftMap.get(move)));
-                System.out.print(" != ");
-                Printer.green(String.valueOf(teacherPerftMap.get(move)));
-                System.out.println(") out of " + faultyMoves + " faulty");
+        if(root) {
+            StringBuilder branchFenStr = new StringBuilder(fenStr + (branch.isEmpty() ? "" : " moves " + String.join(" ", branch)));
+            System.out.println("\nBranch: " + branchFenStr);
+        }
+    }
+
+    private static final void printMissing(Set<String> missing) {
+        int count = 0;
+
+        for(String str : missing) {
+            Printer.red("- " + str + " missing" + ((count < 9) ? "\n" : ""));
+
+            if(++count > 9) {
+                System.out.println(" ... and " + (missing.size() - 10) + " more\n");
+                return;
             }
         }
     }
 
-    private static Map<String, Long> getTeacherPerftMap(int depth, String fenStr, List<String> moves) {
+    private static final void printExtra(Set<String> extra) {
+        int count = 0;
+
+        for(String str : extra) {
+            Printer.green("- " + str + " extra" + ((count < 9) ? "\n" : ""));
+
+            if(++count > 9) {
+                System.out.println(" ... and " + (extra.size() - 10) + " more\n");
+                return;
+            }
+        }
+    }
+
+    private static final Map<String, Long> getTeacherPerftMap(int depth, String fenStr, List<String> moves) {
         StringBuilder cmd = new StringBuilder();
         Map<String, Long> map = new HashMap<>();
 
@@ -199,7 +247,7 @@ public class Autoperft {
         return map;
     }
 
-    private static List<String> waitForMatch(Pattern regex, int timeout) {
+    private static final List<String> waitForMatch(Pattern regex, int timeout) {
         List<String> result = new ArrayList<>();
         long startTime = System.currentTimeMillis();
         boolean matched = false;
@@ -245,7 +293,7 @@ public class Autoperft {
         return result;
     }
 
-    private static void sendCommand(String cmd) {
+    private static final void sendCommand(String cmd) {
         try {
             writer.write(cmd + "\n");
             writer.flush();
@@ -254,7 +302,7 @@ public class Autoperft {
         }
     }
 
-    private static boolean openProcess(String path) {
+    private static final boolean openProcess(String path) {
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(path.toString()).redirectErrorStream(true);
             process = processBuilder.start();
@@ -267,7 +315,7 @@ public class Autoperft {
         return true;
     }
 
-    private static void closeProcess() {
+    private static final void closeProcess() {
         try {
             writer.close();
             reader.close();
