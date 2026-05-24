@@ -6,8 +6,8 @@
 
 package engine.base;
 
-import engine.helper.Printer;
 import engine.model.Model;
+import engine.model.Printer;
 import engine.uci.UCI;
 
 public class App {

@@ -6,8 +6,8 @@
 
 package engine.model;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import engine.helper.FEN;
 import engine.model.magics.MagicBitboard;
@@ -61,12 +61,12 @@ public class Model {
         GameInfo.setWithFEN(fenObj);
     }
 
-    public static final void setPosition(String fenStr, ArrayList<String> moves) {
+    public static final void setPosition(String fenStr, List<String> moves) {
         Model.setPosition(fenStr);
 
         for(String str : moves) {
             MoveList moveList = new MoveList();
-            MoveGeneration.genPseudo(moveList);
+            MoveGeneration.genLegal(moveList);
 
             short move;
             for(int i = 0; i < moveList.size(); i++) {
@@ -80,12 +80,13 @@ public class Model {
         }
     }
     
-    public static final Map<String, Long> getPerftMap(int depth, String fenStr, ArrayList<String> movesMade) {
+    public static final Map<String, Long> getPerftMap(int depth, String fenStr, List<String> movesMade) {
         Map<String, Long> map = new HashMap<>();
         MoveList legalMoves = new MoveList();
         short move;
 
         Model.setPosition(fenStr, movesMade);
+
         MoveGeneration.genLegal(legalMoves);
 
         for(int i = 0; i < legalMoves.size(); i++) {
@@ -95,7 +96,7 @@ public class Model {
                 map.put(Move.getAlgebraic(move), 1L);
             } else {
                 Move.make(move);
-                map.put(Move.getAlgebraic(move), perft(depth - 1, false, false));
+                map.put(Move.getAlgebraic(move), perft(depth - 1, false, true));
                 Move.unmake(move);
             }
         }
@@ -109,9 +110,11 @@ public class Model {
         long taken = System.nanoTime() - start;
 
         if (nodes > 0 && print) {
+            int nps = (int) (nodes / (++taken / 1_000_000_000.0));
+
             System.out.println("\nNodes: " + nodes);
             System.out.println("Time: " + taken / 1_000_000 + "ms");
-            System.out.println("NPS: " + (int) (nodes / (++taken / 1_000_000_000.0)) + "\n");
+            System.out.println("NPS: " + nps + "\n");
         }
 
         return nodes;

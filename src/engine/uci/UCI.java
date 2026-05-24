@@ -18,11 +18,12 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import engine.helper.Autoperft;
 import engine.helper.FEN;
-import engine.helper.Printer;
 import engine.model.GameInfo;
 import engine.model.Model;
+import engine.model.Printer;
 
 public class UCI {
     private static final Map<String, Consumer<String>> commands = new HashMap<>();
@@ -40,7 +41,8 @@ public class UCI {
     private static final Pattern patternMate = Pattern.compile(".*mate (\\d+) .*");
     private static final Pattern patternMovetime = Pattern.compile(".*movetime (\\d+).*");
     private static final Pattern patternPerft = Pattern.compile("perft ([1-9]|[1-9]\\\\d).*");
-    private static final Pattern patternBisect = Pattern.compile("^[1-9]\\d*(?: long)?$");
+    private static final Pattern patternAutoperft = Pattern.compile("^(?:(\\d{1,3})?(?:\\s+)?(long)?)?$");
+    private static final Pattern patternBisect = Pattern.compile("^(?:long)?$");
     // private static final Pattern patternTeacher = Pattern.compile("teacher\\s+[\\w\\s\\\\./:-]+\\.exe");
     private static final Pattern patternPosition =
             Pattern.compile("(?:fen (?<fen>.* \\d+ \\d+)|startpos)(?: moves (?<moves>.*))?");
@@ -127,7 +129,7 @@ public class UCI {
     private static final void position(String params) {
         String[] moves = null;
         String fenStr = FEN.START_FEN;
-        Matcher matcher = patternPosition.matcher(params);
+        Matcher matcher = patternPosition.matcher(params.strip());
 
         if (matcher.matches()) {
             if (matcher.group("fen") != null) {
@@ -184,6 +186,8 @@ public class UCI {
     private static final void print(String param) {
         if (param.isEmpty()) {
             Printer.board();
+        } else if(param.equals("long")) {
+            Printer.all();
         } else {
             Printer.bitboard(param);
         }
@@ -192,30 +196,43 @@ public class UCI {
     private static final void info(String ignore) {
         out.println("\nTurn: " + GameInfo.getTurnString() + "\nHalfmoves: "
                 + GameInfo.getHalfmoves() + "\nFullmoves: " + GameInfo.getFullmoves()
-                + "\nCastling: " + GameInfo.getCastlingString() + "\n");
+                + "\nCastleRights: " + GameInfo.getCastleRightsString() + "\n");
     }
 
     private static final void autoperft(String param) {
-        if(param.equals("long") || param.isEmpty()) {
-            Autoperft.test(param);
+        Matcher matcher = patternAutoperft.matcher(param);
+
+        if(matcher.matches()) {
+            String intStr = matcher.group(1);
+            String mode = matcher.group(2);
+
+            if (mode == null) {
+                mode = "";
+            }
+
+            if (intStr != null) {
+                int test = Integer.parseInt(intStr);
+
+                if(test < 1 || test > Autoperft.TEST_SIZE) {
+                    out.println("Invalid arguments: <test_start> must be in the range [1, " + Autoperft.TEST_SIZE + "]");
+                } else {
+                    Autoperft.test(test - 1, "single");
+                }
+            } else {
+                Autoperft.test(mode);
+            }
         } else {
-            out.println("Invalid arguments: autoperft [long]");
+            out.println("Invalid arguments: autoperft <test_start> <long>");
         }
     }
 
     private static final void bisect(String param) {
-        if(param.isEmpty()) {
-            Autoperft.bisect(1, false);
+        Matcher matcher = patternBisect.matcher(param);
+
+        if(matcher.matches()) {
+            Autoperft.bisect(!param.isEmpty());
         } else {
-            Matcher matcher = patternBisect.matcher(param);
-
-            if(matcher.matches()) {
-                String[] params = param.split(" ");
-
-                Autoperft.bisect(Integer.valueOf(params[0]), (params.length > 1 ? true : false));
-            } else {
-                out.println("Invalid arguments: bisect [depth] [long]");
-            }
+            out.println("Invalid arguments: bisect <long>");
         }
     }
 
@@ -225,11 +242,11 @@ public class UCI {
                     " - setoption\n" +
                     " - isready\n" + 
                     " - position\n" + 
-                    " - go\n" +
-                    " - print [name]+\n" + 
+                    " - go <perft [depth]>\n" +
                     " - info\n" + 
-                    " - autoperft [long]\n" + 
-                    " - bisect [depth] [long]\n" + 
+                    " - print <<name+> | long>\n" + 
+                    " - autoperft <test> <long>\n" + 
+                    " - bisect <long>\n" + 
                     " - stop\n" + 
                     " - quit\n");
     }

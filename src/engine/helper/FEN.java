@@ -19,7 +19,7 @@ public class FEN {
 
     private StringBuilder fen;
     private StringBuilder turn;
-    private StringBuilder castling;
+    private StringBuilder castleRights;
     private StringBuilder ep;
     private int halfmoves = 0;
     private int fullmoves = 1;
@@ -40,9 +40,9 @@ public class FEN {
         }
 
         if (fields.length > 2) {
-            this.castling = new StringBuilder(fields[2]);
+            this.castleRights = new StringBuilder(fields[2]);
         } else {
-            this.castling = new StringBuilder("KQkq");
+            this.castleRights = new StringBuilder("KQkq");
         }
 
         if (fields.length > 3) {
@@ -91,7 +91,7 @@ public class FEN {
         }
 
         fen.deleteCharAt(fen.length() - 1);
-        fen.append(" " + GameInfo.getTurnString().charAt(0) + " " + GameInfo.getCastlingString() + " " + GameInfo.getEPString() + " " + GameInfo.getHalfmoves() + " " + GameInfo.getFullmoves());
+        fen.append(" " + GameInfo.getTurnString().charAt(0) + " " + GameInfo.getCastleRightsString() + " " + GameInfo.getEPString() + " " + GameInfo.getHalfmoves() + " " + GameInfo.getFullmoves());
 
         return new FEN(fen.toString());
     }
@@ -104,8 +104,8 @@ public class FEN {
         return turn.toString();
     }
 
-    public final String getCastling() {
-        return castling.toString();
+    public final String getCastleRights() {
+        return castleRights.toString();
     }
 
     public final String getEp() {
@@ -121,13 +121,13 @@ public class FEN {
     }
 
     public final String get() {
-        return fen.toString() + " " + turn.toString() + " " + castling.toString() + " " + ep.toString() + " "
+        return fen.toString() + " " + turn.toString() + " " + castleRights.toString() + " " + ep.toString() + " "
                 + halfmoves + " " + fullmoves;
     }
 
     @Override
     public final String toString() {
-        return fen.toString() + " " + turn.toString() + " " + castling.toString() + " " + ep.toString() + " "
+        return fen.toString() + " " + turn.toString() + " " + castleRights.toString() + " " + ep.toString() + " "
                 + halfmoves + " " + fullmoves;
     }
 }

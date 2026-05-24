@@ -128,11 +128,11 @@ public class MagicBitboard {
     }
 
     public static final long getRookMoves(int square) {
-        return attacks[attacksOffsets[square] + (lookups[transform(Bitboard.get(Enum.OCCUPIED) & MagicBitboardMask.getRookMask(square), MagicNumbers.ROOK_MAGICS[square], rookShift[square]) + lookupsOffsets[square]] & 0xFF)];
+        return attacks[attacksOffsets[square] + (lookups[transform(Bitboard.get(Enum.OCCUPIED) & MagicBitboardMask.getRookBlockerMask(square), MagicNumbers.ROOK_MAGICS[square], rookShift[square]) + lookupsOffsets[square]] & 0xFF)];
     }
 
     public static final long getBishopMoves(int square) {
-        return attacks[attacksOffsets[square + 64] + (lookups[transform(Bitboard.get(Enum.OCCUPIED) & MagicBitboardMask.getBishopMask(square), MagicNumbers.BISHOP_MAGICS[square], bishopShift[square]) + lookupsOffsets[square + 64]] & 0xFF)];
+        return attacks[attacksOffsets[square + 64] + (lookups[transform(Bitboard.get(Enum.OCCUPIED) & MagicBitboardMask.getBishopBlockerMask(square), MagicNumbers.BISHOP_MAGICS[square], bishopShift[square]) + lookupsOffsets[square + 64]] & 0xFF)];
     }
 
     public static final long getQueenMoves(int square) {
@@ -147,7 +147,7 @@ public class MagicBitboard {
         ArrayList<Long> usedBishopAttacks = new ArrayList<>();
 
         for(byte square = 0; square < 64; square++) {
-            blockerSet = createBlockerSet(MagicBitboardMask.getRookMask(square));
+            blockerSet = createBlockerSet(MagicBitboardMask.getRookBlockerMask(square));
             attacksOffsets[square] = attacksIndex;
 
             for(long config : blockerSet) {
@@ -163,7 +163,7 @@ public class MagicBitboard {
         }
 
         for(byte square = 0; square < 64; square++) {
-            blockerSet = createBlockerSet(MagicBitboardMask.getBishopMask(square));
+            blockerSet = createBlockerSet(MagicBitboardMask.getBishopBlockerMask(square));
             attacksOffsets[square + 64] = attacksIndex;
 
             for(long config : blockerSet) {
@@ -188,7 +188,7 @@ public class MagicBitboard {
         int lookupsOffsetCounter = 0;
         
         for(byte square = 0; square < 64; square++) {
-            blockerSet = createBlockerSet(MagicBitboardMask.getRookMask(square));
+            blockerSet = createBlockerSet(MagicBitboardMask.getRookBlockerMask(square));
             magic = MagicNumbers.ROOK_MAGICS[square];
             shift = rookShift[square];
 
@@ -211,7 +211,7 @@ public class MagicBitboard {
         }
 
         for(byte square = 0; square < 64; square++) {
-            blockerSet = createBlockerSet(MagicBitboardMask.getBishopMask(square));
+            blockerSet = createBlockerSet(MagicBitboardMask.getBishopBlockerMask(square));
             magic = MagicNumbers.BISHOP_MAGICS[square];
             shift = bishopShift[square];
 

@@ -4,11 +4,12 @@
  * Purpose: To visually represent in the terminal data structures for debugging purposes
  */
 
-package engine.helper;
+package engine.model;
 
-import engine.model.Bitboard;
-import engine.model.Board;
-import engine.model.Piece;
+import java.util.ArrayList;
+import java.util.List;
+
+import engine.helper.Enum;
 
 public class Printer {
     private static final String WHITE = "\u001B[37m";
@@ -34,28 +35,24 @@ public class Printer {
                 code = Board.get(index);
 
                 if((Bitboard.get(Board.get(index)) & (1L << index)) == 0) {
-                    System.out.println("\nindex: " + index);
-                    System.out.println("Board.get(" + index + "): " + Board.get(index));
-                    System.out.println("Bitboard.get(" + Board.get(index) + "): " + Bitboard.get(Board.get(index)));
-                    System.out.println("Bitboard.get(" + Board.get(index) + ") & (1L << " + index + "): " + (Bitboard.get(Board.get(index)) & (1L << index)));
-
-                    String expected = "";
-                    for(int k = 0; k < Enum.LENGTH; k++) {
-                        if((k >= Enum.WHITE + Enum.HOME && k <= Enum.WHITE + Enum.PROMO) || (k >= Enum.BLACK + Enum.HOME && k <= Enum.BLACK + Enum.PROMO) || k == Enum.EP) {
+                    List<Integer> bitboardHits = new ArrayList<>();
+                    for(int k = 0; k < Enum.BITBOARD_LENGTH; k++) {
+                        if(k == Enum.WHITE + Enum.PROMO || k == Enum.BLACK + Enum.PROMO || k == Enum.EP) {
                             continue;
                         } else if((Bitboard.get(k) & (1L << index)) != 0) {
-                            if(expected.equals("")) {
-                                expected += Enum.codeToString(k);
-                            } else {
-                                expected += "/" + Enum.codeToString(k);
-                            }
-                            Printer.bitboard(k);
+                            bitboardHits.add(k);
                         }
                     }
+                    
+                    int boardValue = Board.get(index);
+                    String boardValueStr = Enum.codeToString(boardValue);
 
-                    System.out.println("\n\nWARNING: At index " + index + ": Missmatched Board and Bitboard data structures. " +
-                        "Expected \"" + expected + "\" in Board, but found \"" + Board.getString(index) + "\" instead.");
-
+                    System.out.println("\n\nBoard has " + boardValueStr + " at index " + index + ", but the " + boardValueStr + " bitboard is ");
+                    bitboard(boardValue, boardValueStr);
+                    System.out.println("These bitboards are set instead: ");
+                    for(int bb : bitboardHits) {
+                        bitboard(bb);
+                    }
                     System.exit(1);
                 } else if(Piece.isWhite(code)) {
                     blue(Board.getString(index));
@@ -138,6 +135,21 @@ public class Printer {
         System.out.println();
     }
 
+    public static final void bitboard(long bitboard, int label) {
+        bitboard(bitboard, String.valueOf(label));
+    }
+
+    public static final void all() {
+        for(int i = 0; i < Enum.BITBOARD_LENGTH; i++) {
+            Printer.bitboard(i);
+        }
+        Printer.board();
+    }
+
+    public static final void move(short move) {
+        System.out.println(Move.getAlgebraic(move));
+    }
+
     public static final void white(String str) {
         System.out.print(WHITE + str + WHITE);
     }
@@ -164,5 +176,23 @@ public class Printer {
 
     public static final void green(long num) {
         System.out.print(GREEN + num + WHITE);
+    }
+
+    public static String formatUnderscores(long value) {
+        String str = Long.toString(value);
+        StringBuilder result = new StringBuilder();
+
+        int count = 0;
+
+        for (int i = str.length() - 1; i >= 0; i--) {
+            result.append(str.charAt(i));
+            count++;
+
+            if (count % 3 == 0 && i != 0) {
+                result.append('_');
+            }
+        }
+
+        return result.reverse().toString();
     }
 }

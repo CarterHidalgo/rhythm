@@ -8,10 +8,10 @@
 package engine.helper;
 
 public class Enum {
-    public static final int LENGTH = 21;
+    public static final int BITBOARD_LENGTH = 19;
 
     public static final int WHITE = 0;
-    public static final int BLACK = 9;
+    public static final int BLACK = 8;
 
     public static final int PAWN = 1;
     public static final int KNIGHT = 2;
@@ -19,12 +19,18 @@ public class Enum {
     public static final int ROOK = 4;
     public static final int QUEEN = 5;
     public static final int KING = 6;
-    public static final int HOME = 7;
-    public static final int PROMO = 8;
+    public static final int PROMO = 7;
 
-    public static final int EMPTY = 18;
-    public static final int OCCUPIED = 19;
-    public static final int EP = 20;
+    public static final int EMPTY = 16;
+    public static final int OCCUPIED = 17;
+    public static final int EP = 18;
+
+    public static final int A1 = 0;
+    public static final int E1 = 4;
+    public static final int H1 = 7;
+    public static final int A8 = 56;
+    public static final int E8 = 60;
+    public static final int H8 = 63;
 
     public static final int stringToCode(String piece) {
         switch (piece) {
@@ -48,6 +54,8 @@ public class Enum {
             case "K":
             case "wking":
                 return WHITE + KING;
+            case "wpromo":
+                return WHITE + PROMO;
             case "black":
                 return BLACK;
             case "p":
@@ -68,6 +76,8 @@ public class Enum {
             case "k":
             case "bking":
                 return BLACK + KING;
+            case "bpromo":
+                return BLACK + PROMO;
             case "empty":
                 return EMPTY;
             case "occupied":
@@ -95,8 +105,6 @@ public class Enum {
                 return "Q";
             case WHITE + KING:
                 return "K";
-            case WHITE + HOME:
-                return "whome";
             case WHITE + PROMO:
                 return "wpromo";
             case BLACK:
@@ -113,6 +121,8 @@ public class Enum {
                 return "q";
             case BLACK + KING:
                 return "k";
+            case BLACK + PROMO:
+                return "bpromo";
             case EMPTY:
                 return "empty";
             case OCCUPIED:
