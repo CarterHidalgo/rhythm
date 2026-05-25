@@ -1,6 +1,6 @@
 # Rhythm Chess Engine
 
-A WIP UCI-complient NNUE Java chess engine.
+A WIP UCI-complient Java chess engine.
 
 ## Components
 
