@@ -1,51 +1,38 @@
 /*
  * Author: Carter Hidalgo (based on code from sohamkorade: https://github.com/sohamkorade/autoperft)
  * 
- * Purpose: Run automatic perft tests and bisect missing or extra moves
+ * Purpose: Run automatic perft tests and bisect missing/extra moves
  */
 
 package engine.helper;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.regex.Pattern;
 
 import engine.model.Model;
 import engine.model.Printer;
 
 public class Autoperft {
     public static final int TEST_SIZE = 130;
-    private static final Path teacherPath = Paths.get("src", "resources", "stockfish.exe");
     private static final Path perftsuitePath = Paths.get("src", "resources", "perftsuite.txt");
     private static List<String> tests = new ArrayList<>();
-    private static Process process;
-    private static BufferedWriter writer;
-    private static BufferedReader reader;
-    private static ConcurrentLinkedQueue<String> output = new ConcurrentLinkedQueue<>();
-
-    private static final Pattern patternNodes = Pattern.compile("Nodes searched: \\d+");
-    private static final Pattern patternMoves = Pattern.compile("[a-h][1-8][a-h][1-8][qrbn]?: (\\d+)");
+    private static List<Long> nps = new ArrayList<>();
 
     public static final boolean test(String mode) {
-        return test(0, mode);
+        return Autoperft.test(0, mode);
     }
 
-    public static final boolean test(int testStart, String mode) {
-        if (!openProcess(teacherPath.toString())) {
-            System.out.println("Unable to open teacher executable at path \"" + teacherPath + "\"");
+    public static final boolean test(int firstTest, String mode) {
+        Teacher teacher = new Teacher();
+
+        if(!teacher.isLoaded()) {
             return false;
         }
 
@@ -67,9 +54,11 @@ public class Autoperft {
 
         System.out.println((singleMode ? "1 test loaded" : tests.size() + " tests loaded"));
 
-        for (int i = testStart; i < tests.size(); i++) {
+        nps.clear();
+        long autoperftStart = System.nanoTime();
+        for (int i = firstTest; i < tests.size(); i++) {
             if(singleMode) {
-                System.out.println("\nTest 1/1");
+                System.out.println("\nTest 1/1 (#" + (i + 1) + ")");
             } else {
                 System.out.println("\nTest " + (i + 1) + "/" + tests.size());
             }
@@ -79,7 +68,14 @@ public class Autoperft {
 
             for (int depth = 1; depth < parts.length; depth++) {
                 Model.setPosition(parts[0]);
+                
+                long testStart = System.nanoTime();
                 long studentNodes = Model.perft(depth, false);
+                long testTaken = (System.nanoTime() - testStart) / 1_000_000_000;
+                long testNPS = studentNodes / ++testTaken;
+
+                nps.add(testNPS);
+
                 long teacherNodes = Long.valueOf(parts[depth].split(" ")[1]);
                 
                 System.out.printf("%-10s%15d ", " Depth: " + depth, studentNodes);
@@ -92,8 +88,8 @@ public class Autoperft {
                     System.out.println(", expected " + teacherNodes);
 
                     boolean longMode = mode.equals("long");
-                    bisect(depth, parts[0], longMode);
-                    closeProcess();
+                    Autoperft.bisect(new BisectContext(teacher, depth, parts[0], longMode));
+                    teacher.closeProcess();
 
                     return false;
                 }
@@ -104,8 +100,11 @@ public class Autoperft {
             }
         }
 
-        Printer.green("All tests passed\n");
-        closeProcess();
+        long autoperftTaken = (System.nanoTime() - autoperftStart) / 1_000_000_000;
+        long avgNPS = nps.stream().mapToLong(Long::longValue).sum() / nps.size();
+        Printer.green("All tests passed");
+        Printer.white(" (" + Printer.formatTimeDuration(autoperftTaken) + "; avg. nps " + avgNPS + ")\n");
+        teacher.closeProcess();
 
         return true;
     }
@@ -116,32 +115,42 @@ public class Autoperft {
     }
 
     public static final void bisect(boolean longMode) {
-        if (!openProcess(teacherPath.toString())) {
-            System.out.println("Unable to open teacher executable at path \"" + teacherPath + "\"");
+        Teacher teacher = new Teacher();
 
+        if(!teacher.isLoaded()) {
             return;
         }
 
         String fenStr = FEN.create().toString();
 
-        bisect(1, fenStr, longMode);
-        closeProcess();
-
+        Autoperft.bisect(new BisectContext(teacher, 1, fenStr, longMode));
+        teacher.closeProcess();
         Model.setPosition(fenStr);
     }
 
-    private static final void bisect(int depth, String fenStr, boolean longMode) {
-        bisect(depth, fenStr, new ArrayList<>(), new ArrayList<>(), longMode, true);
+    private static final void bisect(BisectContext ctx) {
+        Autoperft.bisect(
+            new BisectContext(
+                ctx.teacher, 
+                ctx.depth, 
+                ctx.fenStr, 
+                new ArrayList<>(), 
+                new ArrayList<>(), 
+                ctx.longMode
+            ), 
+            true
+        );
+
         Printer.board();
     }
     
-    private static final void bisect(int depth, String fenStr, List<String> moves, List<String> branch, boolean longMode, boolean root) {
+    private static final void bisect(BisectContext ctx, boolean root) {
         if(root) {
-            System.out.println("\nBisecting in " + (longMode ? "long" : "normal") + " mode...");
+            System.out.println("\nBisecting in " + (ctx.longMode ? "long" : "normal") + " mode...");
         }
         
-        Map<String, Long> teacherMap = getTeacherPerftMap(depth, fenStr, moves);
-        Map<String, Long> studentMap = Model.getPerftMap(depth, fenStr, moves);
+        Map<String, Long> teacherMap = ctx.teacher.getPerftMap(ctx.depth, ctx.fenStr, ctx.moves);
+        Map<String, Long> studentMap = Model.getPerftMap(ctx.depth, ctx.fenStr, ctx.moves);
 
         Set<String> extra = new HashSet<>(studentMap.keySet());
         extra.removeAll(teacherMap.keySet());
@@ -149,7 +158,7 @@ public class Autoperft {
         Set<String> missing = new HashSet<>(teacherMap.keySet());
         missing.removeAll(studentMap.keySet());
 
-        String indent = " " + "  ".repeat(moves.size());
+        String indent = " " + "  ".repeat(ctx.moves.size());
 
         for(Map.Entry<String, Long> entry : teacherMap.entrySet()) {
             String key = entry.getKey();
@@ -160,36 +169,41 @@ public class Autoperft {
                 long diff = Math.abs(student - teacher);
                 
                 if(diff != 0) {
-                    if(!longMode) {
-                        branch.add(key);
+                    if(!ctx.longMode) {
+                        ctx.branch.add(key);
                     }
 
-                    moves.add(key);
+                    ctx.moves.add(key);
 
-                    System.out.print(indent + depth + ". " + key + " (");
+                    System.out.print(indent + ctx.depth + ". " + key + " (");
                     Printer.red(student);
                     System.out.print(" != ");
                     Printer.green(teacher);
                     System.out.println(")");
 
-                    if(depth > 1) {
-                        bisect(depth - 1, fenStr, moves, branch, longMode, false);
+                    if(ctx.depth > 1) {
+                        ctx.depth -= 1;
+                        Autoperft.bisect(ctx, false);
                     }
 
-                    moves.removeLast();
+                    ctx.moves.removeLast();
                     
-                    if(!longMode) {
+                    if(!ctx.longMode) {
                         break;
                     }
                 }
             }
         }
 
-        printMissing(missing);
-        printExtra(extra);
+        Autoperft.printMissing(missing);
+        Autoperft.printExtra(extra);
 
         if(root) {
-            StringBuilder branchFenStr = new StringBuilder(fenStr + (branch.isEmpty() ? "" : " moves " + String.join(" ", branch)));
+            StringBuilder branchFenStr = new StringBuilder(
+                ctx.fenStr + 
+                (ctx.branch.isEmpty() ? "" : " moves " + 
+                String.join(" ", ctx.branch))
+            );
             System.out.println("\nBranch: " + branchFenStr);
         }
     }
@@ -220,108 +234,29 @@ public class Autoperft {
         }
     }
 
-    private static final Map<String, Long> getTeacherPerftMap(int depth, String fenStr, List<String> moves) {
-        StringBuilder cmd = new StringBuilder();
-        Map<String, Long> map = new HashMap<>();
+    private static class BisectContext {
+        final Teacher teacher;
+        int depth;
+        final String fenStr;
+        final List<String> moves, branch;
+        final boolean longMode;
 
-        if (fenStr.isBlank()) {
-            cmd.append("position startpos");
-        } else {
-            cmd.append("position fen " + fenStr);
+        public BisectContext(Teacher teacher, int depth, String fenStr, boolean longMode) {
+            this.teacher = teacher;
+            this.depth = depth;
+            this.fenStr = fenStr;
+            this.moves = new ArrayList<>();
+            this.branch = new ArrayList<>();
+            this.longMode = longMode;
         }
 
-        if (moves != null && moves.size() > 0) {
-            cmd.append(" moves " + String.join(" ", moves));
-        }
-
-        cmd.append("\ngo perft " + depth);
-
-        sendCommand(cmd.toString());
-        for (String line : waitForMatch(patternNodes, 5000)) {
-            if (patternMoves.matcher(line).matches()) {
-                String[] parts = line.split(": ");
-                map.put(parts[0], Long.valueOf(parts[1]));
-            }
-        }
-
-        return map;
-    }
-
-    private static final List<String> waitForMatch(Pattern regex, int timeout) {
-        List<String> result = new ArrayList<>();
-        long startTime = System.currentTimeMillis();
-        boolean matched = false;
-
-        Thread outputThread = new Thread(() -> {
-            while (!Thread.interrupted()) {
-                try {
-                    if (!reader.ready()) {
-                        try {
-                            Thread.sleep(1);
-                            continue;
-                        } catch (InterruptedException e) {
-                            break;
-                        }
-                    }
-
-                    String line = reader.readLine();
-                    if (line != null) {
-                        output.add(line);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        outputThread.start();
-
-        while (!matched && (System.currentTimeMillis() - startTime) < timeout) {
-            if (output.peek() != null) {
-                String line = output.poll();
-                result.add(line);
-                matched = regex.matcher(line).matches();
-            }
-        }
-
-        try {
-            outputThread.interrupt();
-            outputThread.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        return result;
-    }
-
-    private static final void sendCommand(String cmd) {
-        try {
-            writer.write(cmd + "\n");
-            writer.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static final boolean openProcess(String path) {
-        try {
-            ProcessBuilder processBuilder = new ProcessBuilder(path.toString()).redirectErrorStream(true);
-            process = processBuilder.start();
-            writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
-            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        } catch (IOException e) {
-            return false;
-        }
-
-        return true;
-    }
-
-    private static final void closeProcess() {
-        try {
-            writer.close();
-            reader.close();
-            process.destroy();
-        } catch (IOException e) {
-            e.printStackTrace();
+        public BisectContext(Teacher teacher, int depth, String fenStr, List<String> moves, List<String> branch, boolean longMode) {
+            this.teacher = teacher;
+            this.depth = depth;
+            this.fenStr = fenStr;
+            this.moves = moves;
+            this.branch = branch;
+            this.longMode = longMode;
         }
     }
 }

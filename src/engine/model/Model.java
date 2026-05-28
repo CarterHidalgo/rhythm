@@ -64,19 +64,10 @@ public class Model {
     public static final void setPosition(String fenStr, List<String> moves) {
         Model.setPosition(fenStr);
 
-        for(String str : moves) {
-            MoveList moveList = new MoveList();
-            MoveGeneration.genLegal(moveList);
+        for(String moveStr : moves) {
+            short move = Move.create(moveStr);
 
-            short move;
-            for(int i = 0; i < moveList.size(); i++) {
-                move = moveList.get(i);
-
-                if(Move.getAlgebraic(move).equals(str)) {
-                    Move.make(move);
-                    break;
-                }
-            }
+            Move.make(move);
         }
     }
     

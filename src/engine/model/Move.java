@@ -1,8 +1,7 @@
 /*
  * Author: Carter Hidalgo
  * 
- * Purpose: Contains move, flag bitcodes and methods for creating, making, unmaking, or printing
- * moves (shorts)
+ * Purpose: Contains move, flag bitcodes and methods for creating, making, unmaking, or converting moves (shorts/Strings/int)
  */
 
 package engine.model;
@@ -248,6 +247,53 @@ public class Move {
         return (short) ((from & Move.INDEX_MASK) | ((to & Move.INDEX_MASK) << 6) | ((flags & Move.FLAG_MASK) << 12));
     }
 
+    public static final short create(String moveStr) {
+        int from = Move.getIndex(moveStr.substring(0, 2));
+        int to = Move.getIndex(moveStr.substring(2, 4));
+        int flags = 0;
+
+        int self = Board.get(from);
+        int target = Board.get(to);
+        int diff = Math.abs(to - from);
+        
+        if(diff == 16) {
+            flags = Move.DOUBLE_PAWN;
+        }        
+
+        if(moveStr.length() == 5) {
+            char promo = moveStr.charAt(4);
+
+            switch(promo) {
+                case 'q':
+                    flags = Move.QUEEN_PROMO;
+                break;
+                case 'r':
+                    flags = Move.ROOK_PROMO;
+                break;
+                case 'b':
+                    flags = Move.BISHOP_PROMO;
+                break;
+                case 'k':
+                    flags = Move.KNIGHT_PROMO;
+                break;
+            }
+        }
+
+        if(self == GameInfo.getTurn() + Enum.KING && diff > 1) {
+            flags = ((1L << to) & Bitboard.FILE_C) != 0 ? Move.QUEEN_CASTLE : Move.KING_CASTLE;
+        }
+
+        if(to == Long.numberOfTrailingZeros(Bitboard.get(Enum.EP))) {
+            flags = Move.EP_CAPTURE;
+        }
+        
+        if(target != Enum.EMPTY) {
+            flags |= Move.CAPTURE;
+        }
+
+        return (short) ((from & Move.INDEX_MASK) | ((to & Move.INDEX_MASK) << 6) | ((flags & Move.FLAG_MASK) << 12));
+    }
+
     public static final int getTo(short move) {
         return ((move >>> 6) & Move.INDEX_MASK);
     }
@@ -289,20 +335,20 @@ public class Move {
     }
 
     public static final String getAlgebraic(short move) {
-        byte fromIndex = (byte) (move & Move.INDEX_MASK);
-        byte toIndex = (byte) ((move >>> 6) & Move.INDEX_MASK);
-        byte flags = (byte) ((move >>> 12) & Move.FLAG_MASK);
+        int fromIndex = (move & Move.INDEX_MASK);
+        int toIndex = ((move >>> 6) & Move.INDEX_MASK);
+        int flags = ((move >>> 12) & Move.FLAG_MASK);
 
         return indexToAlgebraic(fromIndex) + indexToAlgebraic(toIndex) + flagsToAlgebraic(flags);
     }
 
-    private static final String indexToAlgebraic(byte index) {
+    private static final String indexToAlgebraic(int index) {
         char file = (char) ('a' + (index % 8));
         int rank = 1 + (index / 8);
         return "" + file + rank;
     }
 
-    private static final String flagsToAlgebraic(byte flags) {
+    private static final String flagsToAlgebraic(int flags) {
         if (Bit.isSet(flags, 3)) {
             switch (flags) {
                 case KNIGHT_PROMO:
