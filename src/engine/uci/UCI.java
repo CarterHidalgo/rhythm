@@ -1,8 +1,7 @@
 /*
  * Author: Adapted from FrequentlyMissedDeadlines (https://github.com/FrequentlyMissedDeadlines/Chess-UCI)
  * 
- * Purpose: Starts and manages UCI threads, inputs, and outputs; interacts with the model via
- * UciListener listener
+ * Purpose: Starts and manages UCI threads, inputs, and outputs; sends appropriate commands to the model
  */
 
 package engine.uci;
@@ -43,9 +42,8 @@ public class UCI {
     private static final Pattern patternPerft = Pattern.compile("perft ([1-9]|[1-9]\\\\d).*");
     private static final Pattern patternAutoperft = Pattern.compile("^(?:(\\d{1,3})?(?:\\s+)?(long)?)?$");
     private static final Pattern patternBisect = Pattern.compile("^(?:long)?$");
+    private static final Pattern patternPosition = Pattern.compile("(?:fen (?<fen>\\S+ \\S+ \\S+ \\S+ \\d+ \\d+)|startpos)(?: moves (?<moves>.*))?");
     // private static final Pattern patternTeacher = Pattern.compile("teacher\\s+[\\w\\s\\\\./:-]+\\.exe");
-    private static final Pattern patternPosition =
-            Pattern.compile("(?:fen (?<fen>.* \\d+ \\d+)|startpos)(?: moves (?<moves>.*))?");
 
     private static final Pattern[] goNumeralPatterns = new Pattern[] {patternWhiteTime,
             patternWhiteTimeIncr, patternBlackTime, patternBlackTimeIncr, patternMovesToGo,
@@ -146,7 +144,7 @@ public class UCI {
                 Model.setPosition(fenStr);
             }
         } else {
-            System.out.println("Invalid arguments: position <fen ... | startpos> [moves ...]");
+            System.out.println("Invalid arguments: position [fen <fenstring> | startpos]  moves <move1> .... <movei>");
         }
     }
 

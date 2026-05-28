@@ -43,12 +43,12 @@ public class MoveGeneration {
         long promo = Bitboard.getSelf(Enum.PROMO);
         long ep = Bitboard.get(Enum.EP);
 
-        addPawnMoves(pseudoMoves, self, op, empty, promo, ep);
-        addKnightMoves(pseudoMoves, self, op, empty, promo);
-        addBishopMoves(pseudoMoves, self, op, empty, promo);
-        addRookMoves(pseudoMoves, self, op, empty, promo);
-        addQueenMoves(pseudoMoves, self, op, empty, promo);
-        addKingMoves(pseudoMoves, self, op, empty, promo);
+        MoveGeneration.addPawnMoves(pseudoMoves, self, op, empty, promo, ep);
+        MoveGeneration.addKnightMoves(pseudoMoves, self, op, empty, promo);
+        MoveGeneration.addBishopMoves(pseudoMoves, self, op, empty, promo);
+        MoveGeneration.addRookMoves(pseudoMoves, self, op, empty, promo);
+        MoveGeneration.addQueenMoves(pseudoMoves, self, op, empty, promo);
+        MoveGeneration.addKingMoves(pseudoMoves, self, op, empty, promo);
         
         return pseudoMoves;
     }
@@ -57,9 +57,9 @@ public class MoveGeneration {
         boolean white = GameInfo.getTurn() == Enum.WHITE;
 
         if(white) {
-            addWhitePawns(moves, self, op, empty, promo, ep);
+            MoveGeneration.addWhitePawns(moves, self, op, empty, promo, ep);
         } else {
-            addBlackPawns(moves, self, op, empty, promo, ep);
+            MoveGeneration.addBlackPawns(moves, self, op, empty, promo, ep);
         }
     }
 

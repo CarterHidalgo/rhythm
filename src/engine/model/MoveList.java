@@ -1,3 +1,9 @@
+/*
+ * Author: Carter Hidalgo
+ * 
+ * Purpose: A lightweight list data structure for storing and accessessing moves (shorts)
+ */
+
 package engine.model;
 
 public class MoveList {

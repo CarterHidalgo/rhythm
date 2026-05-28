@@ -195,4 +195,18 @@ public class Printer {
 
         return result.reverse().toString();
     }
+
+    public static String formatTimeDuration(long totalSeconds) {
+        long minutes = totalSeconds / 60;
+        long seconds = totalSeconds % 60;
+
+        if (minutes == 0) {
+            return seconds + (seconds == 1 ? " second" : " seconds");
+        }
+
+        String minutePart = minutes + (minutes == 1 ? " minute" : " minutes");
+        String secondPart = seconds + (seconds == 1 ? " second" : " seconds");
+
+        return minutePart + ", " + secondPart;
+    }
 }
